@@ -1,0 +1,8 @@
+# Bỏ qua thư mục ngôn ngữ
+languages/
+
+# Bỏ qua thư mục upgrade của WordPress
+upgrade/
+
+# Bỏ qua thư mục uploads (chứa media)
+uploads/    
