@@ -24,18 +24,52 @@ function orioni_theme_setup()
     register_nav_menus(array(
         'primary' => __('Main Menu', 'orioni-theme'),
         'footer' => __('Footer Menu', 'orioni-theme'),
-       
+
     ));
 }
 add_action('after_setup_theme', 'orioni_theme_setup');
 
 // Nạp CSS và JS
-function orioni_enqueue_assets()
-{
-    wp_enqueue_style('orioni-style', get_stylesheet_uri(), array(), '1.0');
-    wp_enqueue_style('orioni-main', get_template_directory_uri() . '/assets/css/main.css', array(), '1.0');
-    wp_enqueue_script('orioni-main', get_template_directory_uri() . '/assets/js/main.js', array('jquery'), '1.0', true);
+// Nạp CSS và JS của theme
+function orioni_enqueue_assets() {
+    // CSS chính của theme (style.css ở root theme)
+    wp_enqueue_style(
+        'orioni-style',
+        get_stylesheet_uri(),
+        array(),
+        wp_get_theme()->get('Version')
+    );
+
+    // CSS custom (main.css trong assets/css)
+    wp_enqueue_style(
+        'orioni-main',
+        get_template_directory_uri() . '/assets/css/main.css',
+        array('orioni-style'), // load sau style.css
+        wp_get_theme()->get('Version')
+    );
+
+    // JS custom (main.js trong assets/js)
+    wp_enqueue_script(
+        'orioni-main',
+        get_template_directory_uri() . '/assets/js/main.js',
+        array('jquery'),
+        wp_get_theme()->get('Version'),
+        true
+    );
+
+    // Nếu bạn thực sự có file reveal.js thì bỏ comment dòng này
+    // và đảm bảo nó nằm trong /assets/js/reveal.js
+    /*
+    wp_enqueue_script(
+        'orioni-reveal',
+        get_template_directory_uri() . '/assets/js/reveal.js',
+        array(),
+        wp_get_theme()->get('Version'),
+        true
+    );
+    */
 }
 add_action('wp_enqueue_scripts', 'orioni_enqueue_assets');
+
 
 

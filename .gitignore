@@ -6,3 +6,6 @@ upgrade/
 
 # Bỏ qua thư mục uploads (chứa media)
 uploads/    
+
+# Bỏ qua thư mục upgrade-temp-backup
+upgrade-temp-backup/
