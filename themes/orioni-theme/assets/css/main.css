@@ -352,7 +352,7 @@ a { text-decoration: none; color: inherit; }
   }
 }
 
-/* ===== Trang chủ ===== */
+/* ================================ Trang chủ =========================================== */
 h1.page-title {
   display: none;
 }
@@ -550,4 +550,147 @@ p.reveal {
     30% { transform: scale(1.15); }
     50% { transform: scale(0.9); }
     70% { transform: scale(1.1); }
+}
+
+
+
+/* ========================== Trang Về chúng tôi ========================= */
+/* ===== HERO ABOUT (khớp giao diện ảnh) ===== */
+.about-hero{
+  position:relative; color:#fff;
+  background-size:cover; background-position:center;
+  min-height:var(--h,70vh);
+  display:flex; align-items:center; justify-content:center;
+}
+.about-hero__overlay{
+  position:absolute; inset:0; background:rgb(0 0 0 / var(--ov,.55));
+}
+.about-hero .container{ position:relative; z-index:1; }
+
+/* Khung viền mảnh + chữ ở giữa */
+.about-hero__box{
+  margin-inline:auto; max-width:min(92vw,980px);
+  border:3px solid #fff; padding:26px 40px; text-align:center;
+  backdrop-filter:saturate(110%) blur(1px);
+}
+.about-hero__title{
+  margin:0; text-transform:uppercase; font-weight:800; letter-spacing:.5px;
+  font-size:clamp(28px,4vw,54px); line-height:1.15;
+}
+
+.about-hero__btn:hover{ background:#fff; color:#111; }
+
+/* Breadcrumb dưới hero */
+.about-breadcrumbs{ background:#f6f6f6; border-top:1px solid #eee; border-bottom:1px solid #eee; }
+.about-breadcrumbs .container{ padding:12px 20px; }
+.about-breadcrumbs .crumbs{ color:#666; font-size:14px; }
+.about-breadcrumbs .crumbs a{ color:#333; text-decoration:none; }
+.about-breadcrumbs .crumbs a:hover{ text-decoration:underline; }
+.about-breadcrumbs .sep{ margin:0 8px; color:#999; }
+
+/* Fallback container nếu theme chưa có */
+.container{ max-width:1200px; margin:0 auto; padding:0 20px; }
+@media (max-width:768px){
+  .about-hero__box{ padding:16px 22px; border-width:2px; }
+}
+
+/* Thanh 2 tab (Giới thiệu / Lịch sử) */
+.about-switch { margin: 0 auto 24px; }
+.about-switch__wrap{
+  display: grid;
+  grid-template-columns: 1fr 1fr;     /* mỗi tab 50% */
+  border: 1px solid #e6e6e6;
+  border-radius: 3px;
+  overflow: hidden;                   /* bo góc gọn gàng */
+  margin-left: 20px; margin-right: 20px;
+}
+
+.about-switch__item{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;                   /* chiều cao thanh */
+  padding: 8px 12px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #303030;
+  background: #fff;
+}
+
+/* đường kẻ giữa 2 tab */
+.about-switch__item + .about-switch__item{
+  border-left: 1px solid #e6e6e6;
+}
+
+/* trạng thái đang xem (active) giống ảnh: nền đỏ – chữ trắng */
+.about-switch__item.is-active{
+  background: #e61b23;               /* đỏ Orion (tuỳ chỉnh) */
+  color: #fff;
+  border-left-color: transparent;     /* mất đường kẻ giữa khi bên trái active */
+}
+
+/* mobile: giữ 2 cột, nếu muốn xếp dọc đổi về 1fr */
+@media (max-width: 480px){
+  .about-switch__item{ min-height: 40px; font-size: 14px; }
+}
+
+/*======================== Trang giới thiệu  =========================*/
+/* Khối 2 cột */
+.about-block{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+  margin-left: 20px; margin-right: 20px;
+   
+}
+
+/* Đảo vị trí theo layout */
+.about-block.text-left  .about-block__text  { order: 1; }
+.about-block.text-left  .about-block__image { order: 2; }
+.about-block.text-right .about-block__text  { order: 2; }
+.about-block.text-right .about-block__image { order: 1; }
+
+
+/* Text box */
+.about-block__text{
+  padding: 22px;
+  background: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+ 
+}
+.about-block__title{
+  margin: 0 0 8px;
+  font-weight: 800;
+  color: #e60012;               /* đỏ */
+  font-size: clamp(20px, 2.5vw, 28px);
+  text-align: center;
+}
+.about-block__subtitle{
+  margin: 0 0 14px;
+  font-weight: 700;
+  color: #e60012;
+  font-size: clamp(16px, 2vw, 20px);
+  text-align: center;
+}
+.about-block__content{ line-height: 1.75; color:#333; }
+
+/* Ảnh */
+.about-block__image img{
+  width: 100%;
+  height: auto;
+  display: block;
+ 
+}
+
+/* Câu nhấn đỏ nghiêng trong content */
+.about-block__content .accent{
+  color:#e60012; font-style: italic; font-weight:700;
+}
+
+/* Mobile */
+@media (max-width: 992px){
+  .about-block{ grid-template-columns: 1fr; }
+  .about-block__image, .about-block__text{ order: unset !important; }
 }

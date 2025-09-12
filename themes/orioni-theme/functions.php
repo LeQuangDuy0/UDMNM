@@ -31,7 +31,8 @@ add_action('after_setup_theme', 'orioni_theme_setup');
 
 // Nạp CSS và JS
 // Nạp CSS và JS của theme
-function orioni_enqueue_assets() {
+function orioni_enqueue_assets()
+{
     // CSS chính của theme (style.css ở root theme)
     wp_enqueue_style(
         'orioni-style',
@@ -49,27 +50,39 @@ function orioni_enqueue_assets() {
     );
 
     // JS custom (main.js trong assets/js)
-    wp_enqueue_script(
-        'orioni-main',
-        get_template_directory_uri() . '/assets/js/main.js',
-        array('jquery'),
-        wp_get_theme()->get('Version'),
-        true
-    );
+   wp_enqueue_script(
+    'orioni-main',
+    get_template_directory_uri() . '/assets/js/main.js',
+    array('jquery', 'swiper-js'), 
+    wp_get_theme()->get('Version'),
+    true
+);
 
-    // Nếu bạn thực sự có file reveal.js thì bỏ comment dòng này
-    // và đảm bảo nó nằm trong /assets/js/reveal.js
-    /*
-    wp_enqueue_script(
-        'orioni-reveal',
-        get_template_directory_uri() . '/assets/js/reveal.js',
-        array(),
-        wp_get_theme()->get('Version'),
-        true
-    );
-    */
+
+    // Swiper CSS
+    wp_enqueue_style('swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css');
+    // Swiper JS
+    wp_enqueue_script('swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), null, true);
+
+
+    
 }
 add_action('wp_enqueue_scripts', 'orioni_enqueue_assets');
 
 
+
+
+add_action('init', function () {
+  if (function_exists('acf_add_options_page')) {
+    acf_add_options_page([
+      'page_title' => 'Cài đặt giao diện',
+      'menu_title' => 'Cài đặt giao diện',
+      'menu_slug'  => 'theme-settings',
+      'capability' => 'edit_posts',
+      'redirect'   => false,
+      'position'   => 61,
+      'icon_url'   => 'dashicons-admin-customizer',
+    ]);
+  }
+});
 
