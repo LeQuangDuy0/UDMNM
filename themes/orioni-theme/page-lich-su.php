@@ -4,20 +4,21 @@
 get_header();
 
 /* ===== Lấy dữ liệu ACF (ưu tiên trên trang; nếu có Options Page thì fallback sang 'option') ===== */
-$prefer = function($key) {
+$prefer = function ($key) {
   $v = function_exists('get_field') ? get_field($key) : null;
-  if (!empty($v)) return $v;
+  if (!empty($v))
+    return $v;
   return function_exists('get_field') ? get_field($key, 'option') : null;
 };
 
-$hero_img   = $prefer('hero_image');                       // Image (Array)
+$hero_img = $prefer('hero_image');                       // Image (Array)
 $hero_title = $prefer('hero_title') ?: get_the_title();    // Text
 
-$overlay    = $prefer('hero_overlay_opacity');
-$overlay    = is_numeric($overlay) ? max(0, min(90, (int)$overlay)) : 55; // % (default 55)
+$overlay = $prefer('hero_overlay_opacity');
+$overlay = is_numeric($overlay) ? max(0, min(90, (int) $overlay)) : 55; // % (default 55)
 
-$height_vh  = $prefer('hero_height_vh');
-$height_vh  = (int)($height_vh ?: 70); // default 70vh
+$height_vh = $prefer('hero_height_vh');
+$height_vh = (int) ($height_vh ?: 70); // default 70vh
 
 /* Ảnh nền: ưu tiên ACF image, nếu trống dùng Featured Image */
 $bg_url = '';
@@ -28,8 +29,8 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
 }
 ?>
 
-<section class="about-hero"
-  style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay/100; ?>; <?php if($bg_url) echo 'background-image:url('.esc_url($bg_url).');'; ?>">
+<section class="about-hero" style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay / 100; ?>; <?php if ($bg_url)
+          echo 'background-image:url(' . esc_url($bg_url) . ');'; ?>">
   <div class="about-hero__overlay"></div>
   <div class="container">
     <div class="about-hero__box">
@@ -39,43 +40,154 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
 </section>
 
 <!-- Breadcrumb dưới hero -->
- 
+<?php
+// (Tuỳ chọn) Hỗ trợ lấy Primary Category của Yoast nếu có
+if ( ! function_exists('yoast_get_primary_term_id') ) {
+  function yoast_get_primary_term_id( $taxonomy, $post_id ) {
+    if ( class_exists('WPSEO_Primary_Term') ) {
+      $primary = new WPSEO_Primary_Term( $taxonomy, $post_id );
+      $term_id = (int) $primary->get_primary_term();
+      return $term_id > 0 ? $term_id : 0;
+    }
+    return 0;
+  }
+}
+
+/**
+ * Breadcrumbs linh hoạt
+ */
+function orioni_breadcrumbs() {
+  $sep = '<span class="sep">|</span>';
+  echo '<div class="crumbs">';
+  echo '<a href="'. esc_url( home_url('/') ) .'">Trang chủ</a>';
+
+  if ( is_front_page() ) { echo '</div>'; return; }
+
+  // PAGE (có phân cấp cha/con)
+  if ( is_page() ) {
+    global $post;
+    $ancestors = array_reverse( get_post_ancestors( $post->ID ) );
+    foreach ( $ancestors as $ancestor_id ) {
+      echo ' '. $sep .' <a href="'. esc_url( get_permalink($ancestor_id) ) .'">'. esc_html( get_the_title($ancestor_id) ) .'</a>';
+    }
+    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // SINGLE (bài viết thường)
+  if ( is_singular('post') ) {
+    global $post;
+    // Yoast primary category trước, sau đó đến category đầu tiên
+    $cat_id = yoast_get_primary_term_id('category', $post->ID);
+    if ( ! $cat_id ) {
+      $cats = get_the_category( $post->ID );
+      if ( ! empty($cats) ) $cat_id = $cats[0]->term_id;
+    }
+    if ( $cat_id ) {
+      // Chuỗi cha của category
+      $chain = [];
+      $term = get_term( $cat_id, 'category' );
+      while ( $term && ! is_wp_error($term) ) {
+        $chain[] = $term;
+        if ( $term->parent ) $term = get_term( $term->parent, 'category' );
+        else break;
+      }
+      $chain = array_reverse( $chain );
+      foreach ( $chain as $t ) {
+        echo ' '. $sep .' <a href="'. esc_url( get_term_link($t) ) .'">'. esc_html( $t->name ) .'</a>';
+      }
+    }
+    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // SINGLE (CPT)
+  if ( is_singular() ) {
+    $pt = get_post_type();
+    if ( $pt && $pt !== 'post' ) {
+      $obj = get_post_type_object( $pt );
+      if ( $obj && ! empty($obj->has_archive) ) {
+        echo ' '. $sep .' <a href="'. esc_url( get_post_type_archive_link($pt) ) .'">'. esc_html( $obj->labels->name ) .'</a>';
+      }
+    }
+    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // CATEGORY / TAXONOMY
+  if ( is_category() || is_tax() ) {
+    $term = get_queried_object();
+    if ( $term && $term->parent ) {
+      $parents = array_reverse( get_ancestors( $term->term_id, $term->taxonomy ) );
+      foreach ( $parents as $pid ) {
+        $p = get_term( $pid, $term->taxonomy );
+        echo ' '. $sep .' <a href="'. esc_url( get_term_link($p) ) .'">'. esc_html( $p->name ) .'</a>';
+      }
+    }
+    echo ' '. $sep .' <span>'. esc_html( single_term_title('', false) ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // ARCHIVES
+  if ( is_post_type_archive() ) {
+    $obj = get_post_type_object( get_post_type() );
+    echo ' '. $sep .' <span>'. esc_html( $obj ? $obj->labels->name : 'Lưu trữ' ) .'</span>';
+    echo '</div>'; return;
+  }
+  if ( is_day() )   { echo ' '. $sep .' <span>'. esc_html( get_the_date() ) .'</span>'; echo '</div>'; return; }
+  if ( is_month() ) { echo ' '. $sep .' <span>'. esc_html( get_the_date('F Y') ) .'</span>'; echo '</div>'; return; }
+  if ( is_year() )  { echo ' '. $sep .' <span>'. esc_html( get_the_date('Y') ) .'</span>'; echo '</div>'; return; }
+
+  // SEARCH / 404 / TAG / AUTHOR
+  if ( is_search() ) { echo ' '. $sep .' <span>Tìm kiếm: “'. esc_html( get_search_query() ) .'”</span>'; echo '</div>'; return; }
+  if ( is_tag() )    { echo ' '. $sep .' <span>Thẻ: '. esc_html( single_tag_title('', false) ) .'</span>'; echo '</div>'; return; }
+  if ( is_author() ) { $au = get_queried_object(); echo ' '. $sep .' <span>Tác giả: '. esc_html( $au->display_name ) .'</span>'; echo '</div>'; return; }
+  if ( is_404() )    { echo ' '. $sep .' <span>Không tìm thấy trang</span>'; echo '</div>'; return; }
+
+  echo '</div>';
+}
+?>
 <nav class="about-breadcrumbs">
   <div class="container">
     <?php
-    if (function_exists('yoast_breadcrumb')) {
+    if ( function_exists('yoast_breadcrumb') ) {
       yoast_breadcrumb('<div class="crumbs">','</div>');
     } else {
-      echo '<div class="crumbs"><a href="'.esc_url(home_url('/')).'">Trang chủ</a> <span class="sep">|</span> ';
-      echo '<span>'.esc_html(get_the_title()).'</span></div>';
+      orioni_breadcrumbs(); // fallback tuỳ biến
     }
     ?>
   </div>
 </nav>
+ <!-- Breadcrumb dưới hero - end -->
 
 <?php
-  // Lấy 2 trang con theo đường dẫn (đổi nếu slug khác)
-  $gioi_thieu = get_page_by_path('ve-chung-toi/gioi-thieu');
-  $lich_su    = get_page_by_path('ve-chung-toi/lich-su');
-  $current_id = get_queried_object_id();
+
+// Lấy 2 trang con theo đường dẫn (đổi nếu slug khác)
+$gioi_thieu = get_page_by_path('ve-chung-toi/gioi-thieu');
+$lich_su = get_page_by_path('ve-chung-toi/lich-su');
+$current_id = get_queried_object_id();
 ?>
 <div class="about-switch" aria-label="About tabs">
   <div class="about-switch__wrap">
     <?php if ($gioi_thieu): ?>
       <a class="about-switch__item <?php echo ($current_id === $gioi_thieu->ID) ? 'is-active' : ''; ?>"
-         href="<?php echo esc_url(get_permalink($gioi_thieu->ID)); ?>">
+        href="<?php echo esc_url(get_permalink($gioi_thieu->ID)); ?>">
         Giới thiệu
       </a>
     <?php endif; ?>
 
     <?php if ($lich_su): ?>
       <a class="about-switch__item <?php echo ($current_id === $lich_su->ID) ? 'is-active' : ''; ?>"
-         href="<?php echo esc_url(get_permalink($lich_su->ID)); ?>">
+        href="<?php echo esc_url(get_permalink($lich_su->ID)); ?>">
         Lịch sử
       </a>
     <?php endif; ?>
   </div>
-    </div>  
+</div>
 
 <main class="container page-content">
   <?php the_content(); ?>
@@ -84,15 +196,16 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
 <?php
 // Hiển thị tối đa 6 section (tăng/giảm tuỳ ý)
 for ($i = 1; $i <= 6; $i++):
-  $title    = get_field("about_sec_{$i}_title");
+  $title = get_field("about_sec_{$i}_title");
   $subtitle = get_field("about_sec_{$i}_subtitle");
-  $content  = get_field("about_sec_{$i}_content");   // WYSIWYG
-  $image    = get_field("about_sec_{$i}_image");     // array
-  $layout   = get_field("about_sec_{$i}_layout") ?: 'text-left';
+  $content = get_field("about_sec_{$i}_content");   // WYSIWYG
+  $image = get_field("about_sec_{$i}_image");     // array
+  $layout = get_field("about_sec_{$i}_layout") ?: 'text-left';
 
   // Bỏ qua nếu rỗng cả text & image
-  if (empty($title) && empty($content) && empty($image)) continue;
-?>
+  if (empty($title) && empty($content) && empty($image))
+    continue;
+  ?>
   <section class="about-block <?php echo esc_attr($layout); ?>">
     <div class="about-block__text">
       <?php if ($title): ?>
@@ -112,12 +225,143 @@ for ($i = 1; $i <= 6; $i++):
 
     <?php if (is_array($image) && !empty($image['url'])): ?>
       <div class="about-block__image">
-        <img src="<?php echo esc_url($image['url']); ?>"
-             alt="<?php echo esc_attr($image['alt'] ?? ''); ?>">
+        <img src="<?php echo esc_url($image['url']); ?>" alt="<?php echo esc_attr($image['alt'] ?? ''); ?>">
       </div>
     <?php endif; ?>
+
   </section>
+
 <?php endfor; ?>
+
+<?php
+// =========== MULTI TIMELINE BOARDS (ACF Free, no repeater) ===========
+$MAX_SECTIONS = 6;   // Số bảng tối đa bạn muốn
+$MAX_ITEMS = 12;  // Mỗi bảng có tối đa bao nhiêu mốc (year/content)
+
+// Helper đọc ACF an toàn
+$get = function ($key) {
+  return function_exists('get_field') ? get_field($key) : null; };
+
+for ($s = 1; $s <= $MAX_SECTIONS; $s++) {
+
+  // Đọc field theo tên mới
+  $title = $get("history_{$s}_title");
+  $image = $get("history_{$s}_image");
+  $reverse = (bool) $get("history_{$s}_reverse");
+
+  // Fallback cho Bảng 1: dùng tên cũ nếu chưa đổi sang history_1_*
+  if ($s === 1) {
+    if (!$title)
+      $title = $get('history_title');
+    if (!$image)
+      $image = $get('history_image');
+  }
+
+  // Có ít nhất 1 mốc?
+  $hasAnyItem = false;
+  for ($i = 1; $i <= $MAX_ITEMS; $i++) {
+    $y = $get("history_{$s}_year_{$i}");
+    $c = $get("history_{$s}_content_{$i}");
+    if ($s === 1 && !$y)
+      $y = $get("history_year_{$i}");          // fallback tên cũ
+    if ($s === 1 && !$c)
+      $c = $get("history_content_{$i}");       // fallback tên cũ
+    if ($y || $c) {
+      $hasAnyItem = true;
+      break;
+    }
+  }
+
+  // Không có gì thì bỏ qua bảng này
+  if (!$title && !$image && !$hasAnyItem)
+    continue;
+  ?>
+
+  <section class="timeline-board <?php echo $reverse ? 'is-reverse' : ''; ?>">
+    <div class="container">
+      <?php if ($title): ?>
+        <h2 class="history__title"><?php echo esc_html($title); ?></h2>
+      <?php endif; ?>
+
+      <div class="history__wrap">
+        <?php
+// Gom ảnh theo slot (tối đa 10); có fallback cho field cũ
+$imgs = [];
+for ($k = 1; $k <= 10; $k++) {
+  // Ưu tiên field mới: history_{s}_image_k
+  $im = get_field("history_{$s}_image_{$k}");
+  // Fallback: nếu k=1 mà trống, thử history_{s}_image; nếu s=1 tiếp tục fallback về history_image cũ
+  if (!$im && $k === 1) {
+    $im = get_field("history_{$s}_image");
+    if ($s === 1 && !$im) $im = get_field("history_image");
+  }
+
+  if ($im && !empty($im['url'])) {
+    $w = get_field("history_{$s}_image_{$k}_width");       // px (optional)
+    $y = get_field("history_{$s}_image_{$k}_offset_y");    // px (optional)
+    $x = get_field("history_{$s}_image_{$k}_offset_x");    // px (optional)
+    $imgs[] = [
+      'img' => $im,
+      'w'   => is_numeric($w) ? (int)$w : null,
+      'y'   => is_numeric($y) ? (int)$y : null,
+      'x'   => is_numeric($x) ? (int)$x : null,
+    ];
+  }
+}
+$cols = count($imgs);
+?>
+
+<?php if ($cols): ?>
+  <div class="history__image has-<?php echo $cols; ?>">
+    <?php foreach ($imgs as $slot): $im = $slot['img']; ?>
+      <figure class="hisimg"
+              style="<?php
+                // set biến CSS từng ảnh (nếu có) – dùng cho width & dịch chuyển
+                if (!is_null($slot['w'])) echo '--w:'.$slot['w'].'px;';
+                if (!is_null($slot['y'])) echo '--y:'.$slot['y'].'px;';
+                if (!is_null($slot['x'])) echo '--x:'.$slot['x'].'px;';
+              ?>">
+        <img src="<?php echo esc_url($im['url']); ?>"
+             alt="<?php echo esc_attr($im['alt'] ?? ''); ?>">
+      </figure>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
+
+
+        <div class="history__rail">
+          <ol class="history__list">
+            <?php
+            for ($i = 1; $i <= $MAX_ITEMS; $i++):
+              $year = $get("history_{$s}_year_{$i}");
+              $text = $get("history_{$s}_content_{$i}");
+
+              // fallback cho bảng 1
+              if ($s === 1 && !$year)
+                $year = $get("history_year_{$i}");
+              if ($s === 1 && !$text)
+                $text = $get("history_content_{$i}");
+
+              if (!$year && !$text)
+                continue;
+              ?>
+              <li class="history__item">
+                <?php if ($year): ?>
+                  <h3 class="history__year"><?php echo esc_html($year); ?></h3>
+                <?php endif; ?>
+                <?php if ($text): ?>
+                  <div class="history__text"><?php echo wp_kses_post($text); ?></div>
+                <?php endif; ?>
+
+              </li>
+            <?php endfor; ?>
+          </ol></br>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<?php } // end for sections ?>
 
 
 <?php get_footer(); ?>

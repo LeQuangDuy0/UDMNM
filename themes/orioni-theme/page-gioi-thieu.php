@@ -42,19 +42,129 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
 
 <!-- Breadcrumb dưới hero -->
 
+<?php
+// (Tuỳ chọn) Hỗ trợ lấy Primary Category của Yoast nếu có
+if ( ! function_exists('yoast_get_primary_term_id') ) {
+  function yoast_get_primary_term_id( $taxonomy, $post_id ) {
+    if ( class_exists('WPSEO_Primary_Term') ) {
+      $primary = new WPSEO_Primary_Term( $taxonomy, $post_id );
+      $term_id = (int) $primary->get_primary_term();
+      return $term_id > 0 ? $term_id : 0;
+    }
+    return 0;
+  }
+}
+
+/**
+ * Breadcrumbs linh hoạt
+ */
+function orioni_breadcrumbs() {
+  $sep = '<span class="sep">|</span>';
+  echo '<div class="crumbs">';
+  echo '<a href="'. esc_url( home_url('/') ) .'">Trang chủ</a>';
+
+  if ( is_front_page() ) { echo '</div>'; return; }
+
+  // PAGE (có phân cấp cha/con)
+  if ( is_page() ) {
+    global $post;
+    $ancestors = array_reverse( get_post_ancestors( $post->ID ) );
+    foreach ( $ancestors as $ancestor_id ) {
+      echo ' '. $sep .' <a href="'. esc_url( get_permalink($ancestor_id) ) .'">'. esc_html( get_the_title($ancestor_id) ) .'</a>';
+    }
+    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // SINGLE (bài viết thường)
+  if ( is_singular('post') ) {
+    global $post;
+    // Yoast primary category trước, sau đó đến category đầu tiên
+    $cat_id = yoast_get_primary_term_id('category', $post->ID);
+    if ( ! $cat_id ) {
+      $cats = get_the_category( $post->ID );
+      if ( ! empty($cats) ) $cat_id = $cats[0]->term_id;
+    }
+    if ( $cat_id ) {
+      // Chuỗi cha của category
+      $chain = [];
+      $term = get_term( $cat_id, 'category' );
+      while ( $term && ! is_wp_error($term) ) {
+        $chain[] = $term;
+        if ( $term->parent ) $term = get_term( $term->parent, 'category' );
+        else break;
+      }
+      $chain = array_reverse( $chain );
+      foreach ( $chain as $t ) {
+        echo ' '. $sep .' <a href="'. esc_url( get_term_link($t) ) .'">'. esc_html( $t->name ) .'</a>';
+      }
+    }
+    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // SINGLE (CPT)
+  if ( is_singular() ) {
+    $pt = get_post_type();
+    if ( $pt && $pt !== 'post' ) {
+      $obj = get_post_type_object( $pt );
+      if ( $obj && ! empty($obj->has_archive) ) {
+        echo ' '. $sep .' <a href="'. esc_url( get_post_type_archive_link($pt) ) .'">'. esc_html( $obj->labels->name ) .'</a>';
+      }
+    }
+    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // CATEGORY / TAXONOMY
+  if ( is_category() || is_tax() ) {
+    $term = get_queried_object();
+    if ( $term && $term->parent ) {
+      $parents = array_reverse( get_ancestors( $term->term_id, $term->taxonomy ) );
+      foreach ( $parents as $pid ) {
+        $p = get_term( $pid, $term->taxonomy );
+        echo ' '. $sep .' <a href="'. esc_url( get_term_link($p) ) .'">'. esc_html( $p->name ) .'</a>';
+      }
+    }
+    echo ' '. $sep .' <span>'. esc_html( single_term_title('', false) ) .'</span>';
+    echo '</div>';
+    return;
+  }
+
+  // ARCHIVES
+  if ( is_post_type_archive() ) {
+    $obj = get_post_type_object( get_post_type() );
+    echo ' '. $sep .' <span>'. esc_html( $obj ? $obj->labels->name : 'Lưu trữ' ) .'</span>';
+    echo '</div>'; return;
+  }
+  if ( is_day() )   { echo ' '. $sep .' <span>'. esc_html( get_the_date() ) .'</span>'; echo '</div>'; return; }
+  if ( is_month() ) { echo ' '. $sep .' <span>'. esc_html( get_the_date('F Y') ) .'</span>'; echo '</div>'; return; }
+  if ( is_year() )  { echo ' '. $sep .' <span>'. esc_html( get_the_date('Y') ) .'</span>'; echo '</div>'; return; }
+
+  // SEARCH / 404 / TAG / AUTHOR
+  if ( is_search() ) { echo ' '. $sep .' <span>Tìm kiếm: “'. esc_html( get_search_query() ) .'”</span>'; echo '</div>'; return; }
+  if ( is_tag() )    { echo ' '. $sep .' <span>Thẻ: '. esc_html( single_tag_title('', false) ) .'</span>'; echo '</div>'; return; }
+  if ( is_author() ) { $au = get_queried_object(); echo ' '. $sep .' <span>Tác giả: '. esc_html( $au->display_name ) .'</span>'; echo '</div>'; return; }
+  if ( is_404() )    { echo ' '. $sep .' <span>Không tìm thấy trang</span>'; echo '</div>'; return; }
+
+  echo '</div>';
+}
+?>
 <nav class="about-breadcrumbs">
   <div class="container">
     <?php
-    if (function_exists('yoast_breadcrumb')) {
-      yoast_breadcrumb('<div class="crumbs">', '</div>');
+    if ( function_exists('yoast_breadcrumb') ) {
+      yoast_breadcrumb('<div class="crumbs">','</div>');
     } else {
-      echo '<div class="crumbs"><a href="' . esc_url(home_url('/')) . '">Trang chủ</a> <span class="sep">|</span> ';
-      echo '<span>' . esc_html(get_the_title()) . '</span></div>';
+      orioni_breadcrumbs(); // fallback tuỳ biến
     }
     ?>
   </div>
 </nav>
-
+<!-- Breadcrumb dưới hero - end -->
 <?php
 // Lấy 2 trang con theo đường dẫn (đổi nếu slug khác)
 $gioi_thieu = get_page_by_path('ve-chung-toi/gioi-thieu');
