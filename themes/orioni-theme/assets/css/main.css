@@ -534,11 +534,14 @@ p.reveal {
 }
 
 @media (max-width: 480px) {
-  .product-grid{
+  .product-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 18px; /* gọn hơn ở màn nhỏ */
+    gap: 18px;
+    /* gọn hơn ở màn nhỏ */
   }
-  .product-image{        /* thu nhỏ vòng tròn để vừa 2 cột */
+
+  .product-image {
+    /* thu nhỏ vòng tròn để vừa 2 cột */
     width: 120px !important;
     height: 120px !important;
   }
@@ -1601,10 +1604,11 @@ p.reveal {
   }
 }
 
-@media (max-width: 560px){
-  .products.orioni-grid{
+@media (max-width: 560px) {
+  .products.orioni-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 16px; /* khoảng cách hợp lý ở mobile */
+    gap: 16px;
+    /* khoảng cách hợp lý ở mobile */
   }
 }
 
@@ -2474,8 +2478,76 @@ p.reveal {
 .oc-nav.next {
   right: 14px;
 }
-@media (max-width: 576px){
-  .oc-nav{ width:42px; height:42px; font-size:26px; }
-  .oc-close{ width:42px; height:42px; font-size:24px; }
-  .oc-stage, .oc-img{ max-width: 94vw; max-height: 82vh; }
+
+@media (max-width: 576px) {
+  .oc-nav {
+    width: 42px;
+    height: 42px;
+    font-size: 26px;
+  }
+
+  .oc-close {
+    width: 42px;
+    height: 42px;
+    font-size: 24px;
+  }
+
+  .oc-stage,
+  .oc-img {
+    max-width: 94vw;
+    max-height: 82vh;
+  }
+}
+
+/* ====== Tile +N trong bộ sưu tập ====== */
+.oc-more {
+  position: relative;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.oc-more__link {
+  display: block;
+  position: relative;
+}
+
+.oc-more__img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(.1);
+}
+
+.oc-more__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .46);
+}
+
+.oc-more__badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 42px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .55);
+  line-height: 1;
+}
+
+@media (max-width:1199.98px) {
+  .oc-more__img {
+    height: 220px;
+  }
+}
+
+@media (max-width:767.98px) {
+  .oc-more__img {
+    height: 220px;
+  }
 }

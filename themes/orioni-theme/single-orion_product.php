@@ -2,34 +2,25 @@
 /** Single – Orion Product (FREE gallery) */
 get_header();
 the_post();
-/* ===== Lấy dữ liệu ACF (ưu tiên trên trang; nếu có Options Page thì fallback sang 'option') ===== */
+
+/* ===== Helpers (lấy từ trang hiện tại, fallback Options nếu có) ===== */
 $prefer = function ($key) {
   $v = function_exists('get_field') ? get_field($key) : null;
-  if (!empty($v))
-    return $v;
+  if (!empty($v)) return $v;
   return function_exists('get_field') ? get_field($key, 'option') : null;
 };
 
-$hero_img = $prefer('hero_image');                       // Image (Array)
-$hero_title = $prefer('hero_title') ?: get_the_title();    // Text
-
-$overlay = $prefer('hero_overlay_opacity');
-$overlay = is_numeric($overlay) ? max(0, min(90, (int) $overlay)) : 55; // % (default 55)
-
-$height_vh = $prefer('hero_height_vh');
-$height_vh = (int) ($height_vh ?: 70); // default 70vh
-
-/* Ảnh nền: ưu tiên ACF image, nếu trống dùng Featured Image */
-$bg_url = '';
-if (is_array($hero_img) && !empty($hero_img['url'])) {
-  $bg_url = $hero_img['url'];
-} elseif (has_post_thumbnail()) {
-  $bg_url = get_the_post_thumbnail_url(null, 'full');
-}
+/* ===== HERO ===== */
+$hero_img   = $prefer('hero_image');
+$hero_title = $prefer('hero_title') ?: get_the_title();
+$overlay    = is_numeric($prefer('hero_overlay_opacity')) ? max(0, min(90, (int)$prefer('hero_overlay_opacity'))) : 55;
+$height_vh  = (int)($prefer('hero_height_vh') ?: 70);
+$bg_url     = '';
+if (is_array($hero_img) && !empty($hero_img['url']))       $bg_url = $hero_img['url'];
+elseif (has_post_thumbnail())                               $bg_url = get_the_post_thumbnail_url(null, 'full');
 ?>
 
-<section class="about-hero" style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay / 100; ?>; <?php if ($bg_url)
-          echo 'background-image:url(' . esc_url($bg_url) . ');'; ?>">
+<section class="about-hero" style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay/100; ?>; <?php echo $bg_url ? 'background-image:url('.esc_url($bg_url).');' : ''; ?>">
   <div class="about-hero__overlay"></div>
   <div class="container">
     <div class="about-hero__box">
@@ -38,206 +29,200 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
   </div>
 </section>
 
-<!-- Breadcrumb dưới hero -->
-
 <?php
-// (Tuỳ chọn) Hỗ trợ lấy Primary Category của Yoast nếu có
-if (!function_exists('yoast_get_primary_term_id')) {
-  function yoast_get_primary_term_id($taxonomy, $post_id)
-  {
-    if (class_exists('WPSEO_Primary_Term')) {
-      $primary = new WPSEO_Primary_Term($taxonomy, $post_id);
-      $term_id = (int) $primary->get_primary_term();
-      return $term_id > 0 ? $term_id : 0;
-    }
-    return 0;
-  }
-}
-$breadcrumb_page = get_page_by_path('san-pham'); // trang tổng
+/* ===== Breadcrumb base ===== */
+$breadcrumb_page = get_page_by_path('san-pham');
 
-// Ảnh chính (ACF product_image) -> fallback Featured Image
-$img_id = get_field('product_image') ?: get_post_thumbnail_id();
-
-// ======= Lấy danh sách ảnh gallery theo thứ tự ưu tiên =======
+/* ===== Ảnh chính + gallery ID (ưu tiên ACF rời, rồi shortcode/block, rồi attachment con) ===== */
+$img_id      = get_field('product_image') ?: get_post_thumbnail_id();
 $gallery_ids = [];
 
-// 1) ACF Free: các field ảnh rời gallery_1..gallery_8
+// ACF free: gallery_1..gallery_8
 for ($i = 1; $i <= 8; $i++) {
-  $gid = (int) get_field('gallery_' . $i);
-  if ($gid)
-    $gallery_ids[] = $gid;
+  $gid = (int) get_field('gallery_'.$i);
+  if ($gid) $gallery_ids[] = $gid;
 }
 
-// 2) Gallery chèn trong nội dung (shortcode/block)
+// Shortcode [gallery ids=""]
 if (!$gallery_ids) {
-  // 2a. Shortcode [gallery ids="..."]
   $gal = get_post_gallery(get_the_ID(), false);
-  if (!empty($gal['ids'])) {
-    $gallery_ids = array_map('intval', explode(',', $gal['ids']));
-  }
+  if (!empty($gal['ids'])) $gallery_ids = array_map('intval', explode(',', $gal['ids']));
 }
+
+// Gutenberg gallery (map URL -> ID)
 if (!$gallery_ids) {
-  // 2b. Gutenberg gallery (trả về URL), map về attachment ID
-  $gals = get_post_galleries_images(get_the_ID()); // mảng các gallery -> mảng URL
+  $gals = get_post_galleries_images(get_the_ID());
   if (!empty($gals)) {
     foreach ($gals[0] as $url) {
       $aid = attachment_url_to_postid($url);
-      if ($aid)
-        $gallery_ids[] = $aid;
+      if ($aid) $gallery_ids[] = $aid;
     }
   }
 }
 
-// 3) Fallback: lấy ảnh đính kèm của bài (trừ ảnh chính)
+// Attachment con (fallback)
 if (!$gallery_ids) {
   $attachments = get_children([
-    'post_parent' => get_the_ID(),
-    'post_type' => 'attachment',
+    'post_parent'    => get_the_ID(),
+    'post_type'      => 'attachment',
     'post_mime_type' => 'image',
-    'exclude' => $img_id ? [$img_id] : [],
-    'orderby' => 'menu_order',
-    'order' => 'ASC',
+    'exclude'        => $img_id ? [$img_id] : [],
+    'orderby'        => 'menu_order',
+    'order'          => 'ASC',
   ]);
-  foreach ($attachments as $att)
-    $gallery_ids[] = (int) $att->ID;
+  foreach ($attachments as $att) $gallery_ids[] = (int) $att->ID;
 }
 
-// Gom ảnh chính + gallery (loại trùng)
-$thumb_ids = array_values(array_unique(array_filter(array_merge([$img_id], $gallery_ids))));
+// Mảng ảnh dùng cho fallback slider
+$thumb_ids  = array_values(array_unique(array_filter(array_merge([$img_id], $gallery_ids))));
+$thumb_urls = []; // để sẵn, tránh warning khi foreach
 
-// ACF khác
+/* ===== ACF khác ===== */
 $packaging = (array) get_field('packaging');
-$weights = (array) get_field('weights');
-$short = (string) get_field('short_desc');
+$weights   = (array) get_field('weights');
+$short     = (string) get_field('short_desc');
+
+/* ===== BIẾN THỂ DẠNG HỘP (2P/6P/…): pack_{i}_label/weight/img ===== */
+$pack_variants = [];
+$MAX_PACK = 8;
+for ($i = 1; $i <= $MAX_PACK; $i++) {
+  $lbl  = trim((string) get_field("pack_{$i}_label"));
+  $w    = trim((string) get_field("pack_{$i}_weight"));
+  $imgV = (int) get_field("pack_{$i}_img");
+  if ($lbl !== '' && $imgV) {
+    $pack_variants[] = [
+      'key'    => "p{$i}",
+      'label'  => $lbl,
+      'weight' => $w,
+      'img'    => $imgV,
+    ];
+  }
+}
+
+/* ===== BIẾN THỂ SỮA 180/90 (tuỳ sản phẩm) ===== */
+$milk_variants = [];
+$img180   = (int) get_field('img_180ml');
+$label180 = trim((string) get_field('label_180ml')) ?: '180ml';
+if ($img180) $milk_variants[] = ['key' => '180', 'label' => $label180, 'img' => $img180];
+
+$img90   = (int) get_field('img_90ml');
+$label90 = trim((string) get_field('label_90ml')) ?: '90ml';
+if ($img90)  $milk_variants[] = ['key' => '90', 'label' => $label90,  'img' => $img90];
 ?>
 
 <main class="container orioni-single">
 
   <!-- Breadcrumb -->
   <nav class="orioni-bc">
-    <a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a>
-    <span>›</span>
+    <a href="<?php echo esc_url(home_url('/')); ?>">Trang chủ</a><span>›</span>
     <?php if ($breadcrumb_page): ?>
-      <a href="<?php echo esc_url(get_permalink($breadcrumb_page)); ?>">Sản phẩm</a>
-      <span>›</span>
+      <a href="<?php echo esc_url(get_permalink($breadcrumb_page)); ?>">Sản phẩm</a><span>›</span>
     <?php endif; ?>
     <span class="current"><?php the_title(); ?></span>
   </nav>
 
-  <?php
-  // === LẤY ẢNH BIẾN THỂ 180/90 TỪ ACF ===
-  $label180 = trim((string) get_field('label_180ml')) ?: '180ml';
-  $label90 = trim((string) get_field('label_90ml')) ?: '90ml';
-  $img180 = (int) get_field('img_180ml');
-  $img90 = (int) get_field('img_90ml');
-
-  $variants = [];
-  if ($img180)
-    $variants[] = ['key' => '180', 'label' => $label180, 'img' => $img180];
-  if ($img90)
-    $variants[] = ['key' => '90', 'label' => $label90, 'img' => $img90];
-  ?>
-
   <div class="orioni-single__grid">
-    <!-- Cột trái: Gallery -->
+    <!-- ===== Cột trái: GALLERY ===== -->
     <section class="orioni-gallery" data-gallery>
 
-      <?php if (!empty($variants)): ?>
-        <!-- ====== GALLERY THEO BIẾN THỂ (180/90) ====== -->
-        <div class="g-stage" data-stage data-variants>
-          <?php foreach ($variants as $i => $v): ?>
+      <?php if (!empty($pack_variants)): ?>
+        <!-- Gallery theo DẠNG HỘP -->
+        <div class="g-stage" data-stage data-packs>
+          <?php foreach ($pack_variants as $i => $p): ?>
             <?php echo wp_get_attachment_image(
-              $v['img'],
-              'xlarge',
-              false,
-              [
-                'class' => 'g-main vimg' . ($i === 0 ? ' is-show' : ''),
-                'data-variant' => $v['key'],
-                'loading' => $i === 0 ? 'eager' : 'lazy'
-              ]
+              $p['img'], 'xlarge', false,
+              ['class' => 'g-main pimg'.($i===0?' is-show':''), 'data-pack'=>$p['key'], 'loading'=>$i===0?'eager':'lazy', 'decoding'=>'async', 'fetchpriority'=>$i===0?'high':'low']
             ); ?>
           <?php endforeach; ?>
         </div>
-        <!-- Không cần prev/next & thumbnails khi dùng biến thể -->
+
+      <?php elseif (!empty($milk_variants)): ?>
+        <!-- Gallery theo 180/90 -->
+        <div class="g-stage" data-stage data-variants>
+          <?php foreach ($milk_variants as $i => $v): ?>
+            <?php echo wp_get_attachment_image(
+              $v['img'], 'xlarge', false,
+              ['class' => 'g-main vimg'.($i===0?' is-show':''), 'data-variant'=>$v['key'], 'loading'=>$i===0?'eager':'lazy', 'decoding'=>'async', 'fetchpriority'=>$i===0?'high':'low']
+            ); ?>
+          <?php endforeach; ?>
+        </div>
 
       <?php else: ?>
-
+        <!-- Fallback slider nhiều ảnh -->
         <button class="g-nav prev" type="button" aria-label="Ảnh trước" data-prev>‹</button>
-
         <div class="g-stage" data-stage>
           <?php
-          if ($thumb_ids) {
-            foreach ($thumb_ids as $idx => $id) {
-              echo wp_get_attachment_image($id, 'xlarge', false, [
-                'class' => 'g-main' . ($idx === 0 ? ' is-show' : ''),
-                'loading' => $idx === 0 ? 'eager' : 'lazy'
-              ]);
-            }
+          $slideIndex = 0;
+          foreach ($thumb_ids as $id) {
+            echo wp_get_attachment_image($id, 'xlarge', false, [
+              'class'        => 'g-main'.($slideIndex===0?' is-show':''), 
+              'loading'      => $slideIndex===0?'eager':'lazy',
+              'decoding'     => 'async',
+              'fetchpriority'=> $slideIndex===0?'high':'low'
+            ]);
+            $slideIndex++;
+          }
+          foreach ($thumb_urls as $url) {
+            $u = esc_url($url);
+            echo '<img class="g-main'.($slideIndex===0?' is-show':'').'" src="'.$u.'" alt="" loading="'.($slideIndex===0?'eager':'lazy').'" decoding="async">';
+            $slideIndex++;
+          }
+          if ($slideIndex === 0) {
+            the_post_thumbnail('xlarge', ['class'=>'g-main is-show','loading'=>'eager','decoding'=>'async']);
           }
           ?>
         </div>
-
-        <button class="g-nav next" type="button" aria-label="Ảnh tiếp" data-next>›</button>
-
-        <?php if ($thumb_ids): ?>
+        <?php if ((count($thumb_ids) + count($thumb_urls)) > 1): ?>
           <ul class="g-thumbs" data-thumbs>
-            <?php foreach ($thumb_ids as $i => $tid): ?>
-              <li class="g-thumb<?php echo $i === 0 ? ' is-active' : ''; ?>" data-idx="<?php echo $i; ?>">
-                <?php echo wp_get_attachment_image($tid, 'medium', false, ['loading' => 'lazy']); ?>
+            <?php $t=0; foreach ($thumb_ids as $id): ?>
+              <li class="g-thumb<?php echo $t===0?' is-active':''; ?>" data-idx="<?php echo $t; ?>">
+                <?php echo wp_get_attachment_image($id, 'medium', false, ['loading'=>'lazy','decoding'=>'async']); ?>
               </li>
-            <?php endforeach; ?>
+            <?php $t++; endforeach; foreach ($thumb_urls as $url): ?>
+              <li class="g-thumb<?php echo $t===0?' is-active':''; ?>" data-idx="<?php echo $t; ?>">
+                <img src="<?php echo esc_url($url); ?>" alt="" loading="lazy" decoding="async">
+              </li>
+            <?php $t++; endforeach; ?>
           </ul>
         <?php endif; ?>
+        <button class="g-nav next" type="button" aria-label="Ảnh tiếp" data-next>›</button>
       <?php endif; ?>
 
     </section>
 
-    <!-- Cột phải: Thông tin -->
+    <!-- ===== Cột phải: THÔNG TIN + NÚT CHỌN ===== -->
     <section class="orioni-info">
       <h1 class="orioni-title"><?php the_title(); ?></h1>
-
-      <?php if ($short): ?>
-        <p class="orioni-lead"><?php echo esc_html($short); ?></p>
-      <?php endif; ?>
-
+      <?php if ($short): ?><p class="orioni-lead"><?php echo esc_html($short); ?></p><?php endif; ?>
       <div class="orioni-content"><?php the_content(); ?></div>
 
       <div class="orioni-options">
-        <?php if ($packaging): ?>
+        <?php if (!empty($pack_variants)): ?>
           <div class="o-group">
-            <div class="o-label">Quy cách</div>
+            <div class="o-label">Dạng sản phẩm</div>
             <div class="o-values">
-              <?php foreach ($packaging as $i => $text): ?>
-                <span class="o-chip<?php echo $i === 0 ? ' is-active' : ''; ?>">
-                  <?php echo esc_html($text); ?>
-                </span>
-              <?php endforeach; ?>
-            </div>
-          </div>
-        <?php endif; ?>
-
-        <?php if (!empty($variants)): ?>
-          <!-- NÚT TRỌNG LƯỢNG (LIÊN KẾT VỚI GALLERY BIẾN THỂ) -->
-          <div class="o-group">
-            <div class="o-label">Trọng lượng</div>
-            <div class="o-values">
-              <?php foreach ($variants as $i => $v): ?>
-                <button type="button" class="o-chip js-variant<?php echo $i === 0 ? ' is-active' : ''; ?>"
-                  data-variant="<?php echo esc_attr($v['key']); ?>">
-                  <?php echo esc_html($v['label']); ?>
+              <?php foreach ($pack_variants as $i => $p): ?>
+                <button type="button" class="o-chip js-pack<?php echo $i===0?' is-active':''; ?>"
+                        data-pack="<?php echo esc_attr($p['key']); ?>" data-weight="<?php echo esc_attr($p['weight']); ?>">
+                  <?php echo esc_html($p['label']); ?>
                 </button>
               <?php endforeach; ?>
             </div>
           </div>
-        <?php elseif ($weights): ?>
-          <!-- Fallback: dùng mảng $weights sẵn có của bạn -->
           <div class="o-group">
             <div class="o-label">Trọng lượng</div>
             <div class="o-values">
-              <?php foreach ($weights as $i => $text): ?>
-                <span class="o-chip<?php echo (!$packaging && $i === 0) ? ' is-active' : ''; ?>">
-                  <?php echo esc_html($text); ?>
-                </span>
+              <span class="o-chip is-active js-pack-weight"><?php echo esc_html($pack_variants[0]['weight'] ?: '—'); ?></span>
+            </div>
+          </div>
+        <?php elseif (!empty($milk_variants)): ?>
+          <div class="o-group">
+            <div class="o-label">Trọng lượng</div>
+            <div class="o-values">
+              <?php foreach ($milk_variants as $i => $v): ?>
+                <button type="button" class="o-chip js-variant<?php echo $i===0?' is-active':''; ?>" data-variant="<?php echo esc_attr($v['key']); ?>">
+                  <?php echo esc_html($v['label']); ?>
+                </button>
               <?php endforeach; ?>
             </div>
           </div>
@@ -245,68 +230,45 @@ $short = (string) get_field('short_desc');
       </div>
 
       <?php
-      // Mạng xã hội (giữ nguyên của bạn)
-      $catalog = get_page_by_path('san-pham');
-      $fb = $ins = $ytb = '';
-      if ($catalog) {
-        $pid = $catalog->ID;
-        $fb = trim((string) get_field('fb_url', $pid));
-        $ins = trim((string) get_field('ins_url', $pid));
-        $ytb = trim((string) get_field('ytb_url', $pid));
-      }
-      ?>
+      // Social từ Page "SẢN PHẨM"
+      $fb=$ins=$ytb=''; if ($catalog = get_page_by_path('san-pham')) {
+        $pid=$catalog->ID; $fb=trim((string)get_field('fb_url',$pid)); $ins=trim((string)get_field('ins_url',$pid)); $ytb=trim((string)get_field('ytb_url',$pid));
+      } ?>
       <div class="orioni-share">
         <span>Theo dõi chúng tôi</span>
-        <?php if (!empty($fb)): ?><a href="<?php echo esc_url($fb); ?>" target="_blank" rel="noopener noreferrer"
-            aria-label="Facebook">🔵</a><?php endif; ?>
-        <?php if (!empty($ins)): ?><a href="<?php echo esc_url($ins); ?>" target="_blank" rel="noopener noreferrer"
-            aria-label="Instagram">🟣</a><?php endif; ?>
-        <?php if (!empty($ytb)): ?><a href="<?php echo esc_url($ytb); ?>" target="_blank" rel="noopener noreferrer"
-            aria-label="YouTube">🔴</a><?php endif; ?>
+        <?php if ($fb):  ?><a href="<?php echo esc_url($fb); ?>"  target="_blank" rel="noopener noreferrer" aria-label="Facebook">🔵</a><?php endif; ?>
+        <?php if ($ins): ?><a href="<?php echo esc_url($ins); ?>" target="_blank" rel="noopener noreferrer" aria-label="Instagram">🟣</a><?php endif; ?>
+        <?php if ($ytb): ?><a href="<?php echo esc_url($ytb); ?>" target="_blank" rel="noopener noreferrer" aria-label="YouTube">🔴</a><?php endif; ?>
       </div>
     </section>
   </div>
 
   <?php
+  /* ===== HƯƠNG VỊ (sản phẩm cùng danh mục) ===== */
   $current_id = get_the_ID();
-  $term_ids = wp_get_post_terms($current_id, 'orion_cat', ['fields' => 'ids']);
-
+  $term_ids   = wp_get_post_terms($current_id, 'orion_cat', ['fields'=>'ids']);
   if (!empty($term_ids) && !is_wp_error($term_ids)) {
-    // Lấy tất cả hương vị cùng danh mục để mobile/tablet còn trượt được
     $rel = new WP_Query([
-      'post_type' => 'orion_product',
-      'post__not_in' => [$current_id],
-      'posts_per_page' => -1, // lấy hết, CSS sẽ ẩn bớt trên desktop
-      'tax_query' => [
-        [
-          'taxonomy' => 'orion_cat',
-          'field' => 'term_id',
-          'terms' => $term_ids,
-        ]
-      ],
-      'orderby' => 'date',
-      'order' => 'DESC',
+      'post_type'      => 'orion_product',
+      'post__not_in'   => [$current_id],
+      'posts_per_page' => -1,
+      'tax_query'      => [[ 'taxonomy'=>'orion_cat','field'=>'term_id','terms'=>$term_ids ]],
+      'orderby'        => 'date',
+      'order'          => 'DESC',
     ]);
-
     if ($rel->have_posts()): ?>
       <section class="orioni-related">
         <h2 class="orioni-related__title">HƯƠNG VỊ</h2>
-
         <div class="rel-viewport" data-relviewport>
-          <!-- Nút nav (chỉ hiện ở tablet & mobile qua CSS) -->
           <button class="rel-nav prev" type="button" aria-label="Trước" data-relprev>‹</button>
-
           <ul class="rel-track" data-reltrack>
-            <?php while ($rel->have_posts()):
-              $rel->the_post();
-              $img_id = get_field('product_image') ?: get_post_thumbnail_id();
-              $desc = get_field('short_desc') ?: wp_trim_words(get_the_excerpt(), 18);
-              ?>
+            <?php while ($rel->have_posts()): $rel->the_post();
+              $img = get_field('product_image') ?: get_post_thumbnail_id();
+              $desc= get_field('short_desc') ?: wp_trim_words(get_the_excerpt(),18); ?>
               <li class="orioni-card">
                 <a class="orioni-card__link" href="<?php the_permalink(); ?>">
                   <div class="orioni-card__frame">
-                    <?php if ($img_id)
-                      echo wp_get_attachment_image($img_id, 'large', false, ['loading' => 'lazy']); ?>
+                    <?php if ($img) echo wp_get_attachment_image($img,'large',false,['loading'=>'lazy']); ?>
                   </div>
                   <h3 class="orioni-card__title"><?php the_title(); ?></h3>
                   <p class="orioni-card__desc"><?php echo esc_html($desc); ?></p>
@@ -314,183 +276,82 @@ $short = (string) get_field('short_desc');
               </li>
             <?php endwhile; ?>
           </ul>
-
           <button class="rel-nav next" type="button" aria-label="Tiếp" data-relnext>›</button>
         </div>
       </section>
-      <?php
-    endif;
-    wp_reset_postdata();
-  }
-  ?>
+    <?php endif; wp_reset_postdata(); } ?>
 
-  <?php
-  // ===== Block: Thông tin chi tiết =====
-  $title = trim((string) get_field('detail_title'));
-  $desc1 = get_field('detail_desc_top');     // WYSIWYG -> in an toàn bằng wp_kses_post
-  $img_id = (int) get_field('detail_image');  // Image ID
-  $desc2 = get_field('detail_desc_bottom');
+<?php
+/* ===== Thông tin chi tiết: dùng 2 field duy nhất ===== */
+$d_title = trim((string) get_field('detail_title')) ?: 'Thông tin chi tiết';
+$d_html  = get_field('detail_content'); // WYSIWYG tự do
 
-  if ($title || $desc1 || $img_id || $desc2): ?>
-    <section class="orioni-spec">
-      <div class="container">
+// Nếu bạn muốn: khi trống cả title + content thì ẩn luôn section
+if ($d_title || !empty($d_html)) : ?>
+  <section class="orioni-spec">
+    <div class="container">
+      <?php if ($d_title): ?>
+        <h2 class="orioni-spec__title"><?php echo esc_html($d_title); ?></h2>
+      <?php endif; ?>
 
-        <h2 class="orioni-spec__title">
-          <?php echo esc_html($title ?: 'Thông tin chi tiết'); ?>
-        </h2>
-
-        <?php if ($desc1): ?>
-          <div class="orioni-spec__text">
-            <?php echo wp_kses_post($desc1); ?>
-          </div>
-        <?php endif; ?>
-
-        <?php if ($img_id): ?>
-          <figure class="orioni-spec__media">
-            <?php
-            // Lấy alt/caption để SEO tốt hơn
-            $alt = get_post_meta($img_id, '_wp_attachment_image_alt', true);
-            echo wp_get_attachment_image($img_id, 'full', false, [
-              'class' => 'orioni-spec__img',
-              'alt' => $alt ?: get_the_title($img_id),
-              'loading' => 'lazy'
-            ]);
-            ?>
-          </figure>
-        <?php endif; ?>
-
-        <?php if ($desc2): ?>
-          <div class="orioni-spec__text">
-            <?php echo wp_kses_post($desc2); ?>
-          </div>
-        <?php endif; ?>
-
-      </div>
-    </section>
-  <?php endif; ?>
-
-
-  <?php
-// ====== BỘ SƯU TẬP (lấy Gallery block/shortcode trong nội dung bài) ======
-$gallery_images = get_post_galleries_images(get_the_ID()); // mảng các gallery (mỗi gallery là 1 mảng URL ảnh)
-$collection = [];
-if (!empty($gallery_images) && !empty($gallery_images[0])) {
-  // Chỉ lấy gallery đầu tiên
-  foreach ($gallery_images[0] as $url) {
-    // Cố gắng đổi URL -> ID để lấy size chuẩn, alt, caption
-    $aid = attachment_url_to_postid($url);
-    if ($aid) {
-      // thumb dùng size 'large' (nhanh), full để xem phóng to
-      $thumb = wp_get_attachment_image_src($aid, 'large');
-      $full  = wp_get_attachment_image_src($aid, 'full');
-      $alt   = get_post_meta($aid, '_wp_attachment_image_alt', true);
-      $caption = wp_get_attachment_caption($aid);
-
-      $collection[] = [
-        'id'     => $aid,
-        'thumb'  => $thumb ? $thumb[0] : $url,
-        'full'   => $full  ? $full[0]  : $url,
-        'alt'    => $alt ?: get_the_title($aid),
-        'caption'=> $caption ?: '',
-      ];
-    } else {
-      // Không đổi được sang ID thì dùng URL gốc
-      $collection[] = [
-        'id'     => 0,
-        'thumb'  => $url,
-        'full'   => $url,
-        'alt'    => '',
-        'caption'=> '',
-      ];
-    }
-  }
-}
-
-if (!empty($collection)) : ?>
-  <section class="orioni-collection" data-collection>
-    <h2 class="orioni-stit">BỘ SƯU TẬP</h2>
-
-    <ul class="oc-grid">
-      <?php foreach ($collection as $i => $img): ?>
-        <li class="oc-item">
-          <a href="<?php echo esc_url($img['full']); ?>"
-             class="oc-link"
-             data-zoom
-             data-idx="<?php echo (int)$i; ?>"
-             data-full="<?php echo esc_url($img['full']); ?>"
-             data-caption="<?php echo esc_attr($img['caption']); ?>">
-            <img
-              src="<?php echo esc_url($img['thumb']); ?>"
-              alt="<?php echo esc_attr($img['alt']); ?>"
-              loading="lazy">
-          </a>
-          <?php if ($img['caption']): ?>
-            <figcaption class="oc-cap"><?php echo esc_html($img['caption']); ?></figcaption>
-          <?php endif; ?>
-        </li>
-      <?php endforeach; ?>
-    </ul>
-
-    <!-- Lightbox -->
-    <div class="oc-lightbox" data-ocbox aria-hidden="true">
-      <button class="oc-close" type="button" aria-label="Đóng" data-occlose>×</button>
-      <button class="oc-nav prev" type="button" aria-label="Ảnh trước" data-ocprev>‹</button>
-      <figure class="oc-view">
-        <img src="" alt="" data-ocimg>
-        <figcaption class="oc-viewcap" data-occap></figcaption>
-      </figure>
-      <button class="oc-nav next" type="button" aria-label="Ảnh tiếp" data-ocnext>›</button>
+      <?php if (!empty($d_html)): ?>
+        <div class="orioni-spec__rich">
+          <?php echo apply_filters('the_content', $d_html); ?>
+        </div>
+      <?php endif; ?>
     </div>
   </section>
 <?php endif; ?>
 
-<?php
-// ====== BỘ SƯU TẬP (ACF FREE: image_1...image_10) ======
-$title = trim((string) get_field('collection_title'));
-if ($title === '') $title = 'Bộ sưu tập';
 
-// Tự quét toàn bộ field col_img_*
+ <?php
+/* ===== Bộ sưu tập từ ACF Free: col_img_1..n ===== */
+$col_title = trim((string) get_field('collection_title')) ?: 'Bộ sưu tập';
 $ids = [];
-$all = (array) get_fields(get_the_ID());
-foreach ($all as $key => $val) {
-  if (preg_match('/^col_img_(\d+)$/', $key, $m) && !empty($val)) {
-    $ids[(int)$m[1]] = (int)$val; // lưu theo số thứ tự để còn sort
+if (function_exists('get_fields')) {
+  $all = (array) get_fields(get_the_ID());
+  foreach ($all as $k => $v) {
+    if (preg_match('/^col_img_(\d+)$/', $k, $m) && !empty($v)) {
+      $ids[(int)$m[1]] = (int)$v;
+    }
   }
+  ksort($ids);
+  $ids = array_values($ids);
 }
-ksort($ids);
-$ids = array_values($ids);
-
-if (!empty($ids)) :
-  // ... render grid + lightbox như đã gửi ...
-endif;
-
-
-if (!empty($ids)) : ?>
+if (!empty($ids)): ?>
   <section class="orioni-collection" data-collection>
-    <h2 class="orioni-stit"><?php echo esc_html($title); ?></h2>
+    <h2 class="orioni-stit"><?php echo esc_html($col_title); ?></h2>
 
-    <ul class="oc-grid">
+    <ul class="oc-grid" data-collection-grid data-total="<?php echo (int) count($ids); ?>">
       <?php foreach ($ids as $idx => $aid):
-        $thumb = wp_get_attachment_image_src($aid, 'large');
-        $full  = wp_get_attachment_image_src($aid, 'full');
-        $alt   = get_post_meta($aid, '_wp_attachment_image_alt', true) ?: get_the_title($aid);
-        $cap   = wp_get_attachment_caption($aid) ?: '';
-      ?>
-        <li class="oc-item">
+        $full = wp_get_attachment_image_src($aid,'full');
+        $alt  = get_post_meta($aid,'_wp_attachment_image_alt',true) ?: get_the_title($aid);
+        $cap  = wp_get_attachment_caption($aid) ?: ''; ?>
+        <li class="oc-item oc-it" data-idx="<?php echo (int)$idx; ?>">
           <a href="<?php echo esc_url($full ? $full[0] : wp_get_attachment_url($aid)); ?>"
              class="oc-link"
              data-zoom
              data-idx="<?php echo (int)$idx; ?>"
              data-full="<?php echo esc_url($full ? $full[0] : wp_get_attachment_url($aid)); ?>"
              data-caption="<?php echo esc_attr($cap); ?>">
-            <?php echo wp_get_attachment_image($aid, 'large', false, ['alt' => $alt, 'loading' => 'lazy']); ?>
+            <?php echo wp_get_attachment_image($aid,'large',false,['alt'=>$alt,'loading'=>'lazy']); ?>
           </a>
-          <?php if ($cap): ?><figcaption class="oc-cap"><?php echo esc_html($cap); ?></figcaption><?php endif; ?>
+          <?php if ($cap): ?>
+            <figcaption class="oc-cap"><?php echo esc_html($cap); ?></figcaption>
+          <?php endif; ?>
         </li>
       <?php endforeach; ?>
+
+      <!-- Tile +N -->
+      <li class="oc-item oc-more" data-more-tile style="display:none">
+        <a href="#" class="oc-link oc-more__link" data-more>
+          <img class="oc-more__img" src="" alt="" loading="lazy">
+          <span class="oc-more__badge" data-moretext></span>
+        </a>
+      </li>
     </ul>
 
-    <!-- Lightbox -->
+    <!-- Lightbox giữ nguyên -->
     <div class="oc-lightbox" data-ocbox aria-hidden="true">
       <button class="oc-close" type="button" aria-label="Đóng" data-occlose>×</button>
       <button class="oc-nav prev" type="button" aria-label="Ảnh trước" data-ocprev>‹</button>
@@ -503,8 +364,6 @@ if (!empty($ids)) : ?>
   </section>
 <?php endif; ?>
 
-  </section>
-  </div>
 </main>
 
 <?php get_footer(); ?>

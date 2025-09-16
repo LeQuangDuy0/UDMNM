@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // ========== 1. Toggle menu mobile ==========
+  //Toggle menu mobile 
   const menuToggle = document.querySelector(".menu-toggle");
   const mainNav = document.querySelector(".main-navigation");
 
@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ========== 2. Reveal on scroll ==========
+  //Reveal on scroll 
   const elements = document.querySelectorAll(".reveal");
   const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", function () {
   
 });
 
-// ========== 3. Category bar with scroll buttons ==========
+// Category bar with scroll buttons
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-catwrap]').forEach((wrap) => {
     const bar  = wrap.querySelector('[data-catbar]');
@@ -249,4 +249,109 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
+
+// ====== Chọn biến thể (hộp 2P/6P/...) và chọn loại sản phẩm======
+document.addEventListener('DOMContentLoaded', function () {
+  // ===== DẠNG HỘP (2P/6P/...) =====
+  document.querySelectorAll('.js-pack').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const key = btn.getAttribute('data-pack');     // ví dụ p1, p2, ...
+      const w   = btn.getAttribute('data-weight') || '';
+
+      // active chip
+      const wrap = btn.closest('.o-values');
+      wrap.querySelectorAll('.js-pack').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      // đổi ảnh tương ứng
+      const gallery = document.querySelector('[data-packs]');
+      if (gallery) {
+        gallery.querySelectorAll('.g-main').forEach(img => img.classList.remove('is-show'));
+        const target = gallery.querySelector('.g-main[data-pack="'+ key +'"]');
+        if (target) target.classList.add('is-show');
+      }
+
+      // cập nhật chip trọng lượng
+      const wChip = document.querySelector('.js-pack-weight');
+      if (wChip) wChip.textContent = w || '—';
+    });
+  });
+
+  // ===== 180/90 (nếu bạn vẫn dùng) =====
+  document.querySelectorAll('.js-variant').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const key = btn.getAttribute('data-variant');
+      const wrap = btn.closest('.o-values');
+      wrap.querySelectorAll('.js-variant').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+
+      const gallery = document.querySelector('[data-variants]');
+      if (gallery) {
+        gallery.querySelectorAll('.g-main').forEach(img => img.classList.remove('is-show'));
+        const target = gallery.querySelector('.g-main[data-variant="'+ key +'"]');
+        if (target) target.classList.add('is-show');
+      }
+    });
+  });
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  // ====== Collection preview limiter (+N tile) ======
+  document.querySelectorAll('[data-collection-grid]').forEach(function(grid){
+    const items   = Array.from(grid.querySelectorAll('.oc-it'));      // các ảnh
+    const moreLi  = grid.querySelector('[data-more-tile]');            // tile +N
+    const moreBtn = moreLi ? moreLi.querySelector('[data-more]') : null;
+    const moreTxt = moreLi ? moreLi.querySelector('[data-moretext]') : null;
+    const moreImg = moreLi ? moreLi.querySelector('.oc-more__img') : null;
+
+    if (!items.length || !moreLi) return;
+
+    function limitForWidth(w){
+      if (w >= 1200) return 3;    // Desktop
+      if (w >= 768)  return 2;    // Tablet
+      return 1;                   // Mobile
+    }
+
+    function apply(){
+      const w = window.innerWidth || document.documentElement.clientWidth;
+      const limit  = limitForWidth(w);
+      const total  = items.length;
+      const hidden = Math.max(total - limit, 0);
+
+      // Ẩn/hiện item
+      items.forEach((li, idx) => { li.style.display = (idx < limit) ? '' : 'none'; });
+
+      if (hidden > 0) {
+        moreLi.style.display = '';
+        moreTxt.textContent  = '+' + hidden;
+
+        const nextThumb = items[limit].querySelector('img');
+        if (nextThumb && moreImg) moreImg.src = nextThumb.currentSrc || nextThumb.src;
+
+        // chèn tile +N đúng vị trí (ngay trước phần ảnh bị ẩn đầu tiên)
+        const refNode = items[limit] || null;
+        grid.insertBefore(moreLi, refNode);
+
+        // click +N -> mở lightbox bắt đầu từ ảnh tiếp theo
+        if (moreBtn) {
+          moreBtn.onclick = function(e){
+            e.preventDefault();
+            const nextLink = items[limit].querySelector('[data-zoom]');
+            if (nextLink) nextLink.click();
+          };
+        }
+      } else {
+        moreLi.style.display = 'none';
+      }
+    }
+
+    apply();
+    window.addEventListener('resize', () => {
+      clearTimeout(apply._t);
+      apply._t = setTimeout(apply, 120);
+    });
+  });
+});
+
 
