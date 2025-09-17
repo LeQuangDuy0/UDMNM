@@ -2551,3 +2551,191 @@ p.reveal {
     height: 220px;
   }
 }
+/* ================== Orion News Grid (Press + Product Info) ================== */
+/* Bọc ngoài (tuỳ chọn). Nếu không dùng .or-news-wrap, grid vẫn hoạt động bình thường */
+.or-news-wrap{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* Tiêu đề khối (tuỳ chọn) */
+.or-news-title{
+  margin: 0 0 18px;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .2px;
+  text-align: center;
+}
+
+/* -------- GRID -------- */
+.or-news-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 0 auto;        /* căn giữa */
+  max-width: 1200px;     /* để nội dung không “trôi” quá rộng */
+}
+
+/* Tablet */
+@media (max-width: 1024px){
+  .or-news-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Mobile */
+@media (max-width: 600px){
+  .or-news-grid{ grid-template-columns: 1fr; }
+}
+
+/* -------- CARD -------- */
+.or-news-card{
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.or-news-card:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+
+/* Ảnh: ưu tiên ACF `card_image`, fallback Featured Image trong code – CSS chỉ lo hiển thị */
+.or-news-card .thumb{
+  display: block;
+  aspect-ratio: 16/9;      /* giữ khung ảnh đúng tỉ lệ */
+  background: #f2f2f2;
+  overflow: hidden;
+}
+.or-news-card .thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Placeholder khi không có ảnh (code đang echo <div class="ph"></div>) */
+.or-news-card .ph{
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+  background: repeating-linear-gradient(
+    -45deg, #f5f5f5 0 12px, #ededed 12px 24px
+  );
+}
+
+/* Tiêu đề */
+.or-news-card .title{
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 14px 14px 8px;
+}
+.or-news-card .title a{
+  color: #111;
+  text-decoration: none;
+}
+.or-news-card .title a:hover{ color: #e60012; }
+
+/* Mô tả / phụ đề (lấy ACF subtitle hoặc excerpt) – clamp 2 dòng */
+.or-news-card .subtitle{
+  margin: 0 14px 8px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ngày đăng */
+.or-news-card .date{
+  margin: 0 14px 16px;
+  font-size: 13px;
+  color: #888;
+}
+
+/* -------- Tinh chỉnh khoảng cách/thừa khoảng trắng trong 1 số theme -------- */
+/* Nếu grid là phần tử cuối cùng trong content thì bỏ margin-bottom lớn của theme */
+.entry-content > .or-news-grid:last-child,
+.post-content > .or-news-grid:last-child{
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Nhiều theme bọc content bằng container; để chắc chắn căn giữa: */
+.page .or-news-grid{ margin-left: auto; margin-right: auto; }
+
+/* Nếu theme thêm border/padding lớn ở cuối trang, có thể giảm bằng: */
+/* .site-content, .content-area { padding-bottom: 24px; } */
+
+/* -------- (Tuỳ chọn) Pagination cho grid nếu bạn thêm sau này -------- */
+.or-news-pager{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.or-news-pager a,
+.or-news-pager span{
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #333;
+  text-decoration: none;
+  font-size: 14px;
+}
+.or-news-pager .current{
+  background: #e60012;
+  color: #fff;
+  border-color: #e60012;
+}
+ /* Grid lưới desktop/tablet */
+  .or-news-grid{
+    display:grid; gap:22px;
+    grid-template-columns:repeat(3,1fr);
+  }
+  @media (max-width:1024px){
+    .or-news-grid{ grid-template-columns:repeat(3,1fr); } /* iPad ngang vẫn 3 cột */
+  }
+  @media (max-width:767.98px){
+    .or-news-grid{ grid-template-columns:repeat(2,1fr); } /* nếu có hiển thị trên mobile */
+  }
+  .or-news-card{
+    display:flex; flex-direction:column; gap:12px;
+    background:#fff; border-radius:12px; overflow:hidden;
+    box-shadow:0 8px 18px rgba(0,0,0,.06);
+  }
+  .or-news-card .thumb{ display:block; background:#f3f4f6; }
+  .or-news-card .thumb img{ width:100%; height:220px; object-fit:cover; display:block; }
+  .or-news-card .title{ font-size:18px; line-height:1.35; margin:0 14px; }
+  .or-news-card .title a{ color:#0f172a; text-decoration:none; }
+  .or-news-card .subtitle{ margin:4px 14px 0; color:#475569; font-size:14px; }
+  .or-news-card .date{ margin:8px 14px 14px; color:#6b7280; font-size:13px; }
+
+  .or-stit{ font-weight:800; font-size:26px; }
+
+  /* Ẩn/hiện theo thiết bị */
+  .or-desktop-only{ display:block; }
+  .or-mobile-only{ display:none; }
+  @media (max-width:767.98px){
+    .or-desktop-only{ display:none; }
+    .or-mobile-only{ display:block; }
+  }
+
+  /* MOBILE Tin tức mới */
+  @media (max-width:767.98px){
+    .or-mobile-latest{ margin-top:16px; }
+    .mnews-heading{ font-size:20px; font-weight:800; margin:0 0 12px; }
+    .or-mnews{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:18px; }
+    .mnews-item{ border-bottom:1px solid #eee; padding-bottom:14px; }
+    .mnews-item:last-child{ border-bottom:none; padding-bottom:0; }
+    .mnews-link{ display:grid; grid-template-columns:120px 1fr; gap:14px; align-items:center; text-decoration:none; }
+    .mnews-thumb img{ width:120px; height:80px; object-fit:cover; border-radius:8px; display:block; }
+    .mnews-title{ font-size:16px; line-height:1.35; font-weight:700; color:#0f172a; }
+  }
