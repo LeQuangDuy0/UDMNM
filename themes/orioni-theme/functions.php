@@ -80,7 +80,20 @@ function load_fontawesome() {
     wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css' );
 }
 add_action( 'wp_enqueue_scripts', 'load_fontawesome' );
-
+// Dashicons (nếu cần)
+register_post_type('orion_product', [
+  'labels'      => ['name'=>'Sản phẩm', 'singular_name'=>'Sản phẩm'],
+  'public'      => true,
+  'has_archive' => false, // giữ false vì bạn dùng Page để list
+  'rewrite'     => [
+      'slug'       => 'san-pham-item',   // <-- đổi KHÁC 'san-pham'
+      'with_front' => false
+  ],
+  'menu_icon'   => 'dashicons-products',
+  'supports'    => ['title','editor','thumbnail','excerpt'],
+  'show_in_rest'=> true,
+]);
+add_action('init', function(){ flush_rewrite_rules(); }, 99);
 
 /* ------------------------------------
  * ACF Options Page (nếu có ACF)

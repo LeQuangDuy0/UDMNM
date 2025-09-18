@@ -283,7 +283,7 @@ if ($img90)  $milk_variants[] = ['key' => '90', 'label' => $label90,  'img' => $
 
 <?php
 /* ===== Thông tin chi tiết: dùng 2 field duy nhất ===== */
-$d_title = trim((string) get_field('detail_title')) ?: 'Thông tin chi tiết';
+$d_title = trim((string) get_field('detail_title')) ?: '';
 $d_html  = get_field('detail_content'); // WYSIWYG tự do
 
 // Nếu bạn muốn: khi trống cả title + content thì ẩn luôn section
