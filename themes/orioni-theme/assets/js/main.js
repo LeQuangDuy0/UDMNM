@@ -355,3 +355,50 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+// Nếu bạn đã có file, chỉ cần thêm đoạn dưới vào cuối file là được.
+document.addEventListener('DOMContentLoaded', function () {
+  // Khởi tạo slider Tin tức (Home)
+  document.querySelectorAll('.news-swiper').forEach(function (el) {
+    /* eslint-disable no-new */
+    new Swiper(el, {
+      slidesPerView: 4,
+      spaceBetween: 18,
+      navigation: {
+        nextEl: el.querySelector('.swiper-button-next'),
+        prevEl: el.querySelector('.swiper-button-prev')
+      },
+      pagination: {
+        el: el.querySelector('.swiper-pagination'),
+        clickable: true
+      },
+      breakpoints: {
+        0:    { slidesPerView: 1 },
+        576:  { slidesPerView: 2 },
+        992:  { slidesPerView: 3 },
+        1200: { slidesPerView: 4 }
+      }
+    });
+  });
+});
+
+
+
+document.addEventListener("DOMContentLoaded", function() {
+  const items = document.querySelectorAll('.fanpage-item');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target); // chỉ animate 1 lần
+      }
+    });
+  }, {
+    threshold: 0.2 // xuất hiện 20% là chạy
+  });
+
+  items.forEach(item => {
+    observer.observe(item);
+  });
+});
+
