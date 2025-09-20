@@ -1,0 +1,46 @@
+name: Deploy to InfinityFree via FTP
+
+on:
+  push:
+    branches: [ "main" ]   # đổi nếu bạn dùng branch khác
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # (Tuỳ chọn) Nếu bạn có bước build (ví dụ React/Vite/Laravel Mix),
+      # bạn build xong rồi chỉ upload thư mục build ra host.
+      # InfinityFree không có Node/Composer runtime.
+      # - name: Setup Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      # - name: Install deps & Build
+      #   run: |
+      #     npm ci
+      #     npm run build
+
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Đường dẫn trên server (nên đặt secret để dễ đổi)
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/htdocs/' }}
+          # Đường dẫn local cần upload (mặc định là repo root)
+          local-dir: ./
+          # Loại trừ (khuyên dùng cho WP)
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/vendor/**
+            **/.env
+            **/*.log
+            wp-content/uploads/**
+            wp-content/cache/**
