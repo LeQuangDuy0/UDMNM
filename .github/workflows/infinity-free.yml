@@ -21,7 +21,6 @@ jobs:
           server: ftpupload.net # Change if using another host
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /htdocs/ex/ORIONI/   # THƯ MỤC TRÊN HOST (nhớ tồn tại & có dấu /)
-          local-dir: ./ORIONI/  # Replace with your correct path
+          server-dir: /htdocs/ex/ORIONI/   
           retries: 3
           retryDelay: 10
