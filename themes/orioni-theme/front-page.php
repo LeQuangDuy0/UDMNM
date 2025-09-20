@@ -137,76 +137,70 @@
                 // Chèn slider Tin tức 
                 echo do_shortcode('[home_news_swiper]');
                 ?>
-                
-              <section class="fanpage-section">
-  <div class="container">
-    <h2 class="fanpage-title">LIÊN HỆ FANPAGE</h2>
-    <p class="fanpage-subtitle">Hãy kết nối với chúng tôi !</p>
+                <section class="fanpage-section">
+                    <div class="container">
+                        <h2 class="fanpage-title">LIÊN HỆ FANPAGE</h2>
+                        <p class="fanpage-subtitle">Hãy kết nối với chúng tôi !</p>
 
-    <div class="fanpage-grid">
-      <?php
-      // ===== Facebook =====
-      $fb_img = get_field('fanpage_fb_image'); // ID ảnh
-      $fb_url = get_field('fanpage_fb_url');
-      $fb_img_url = $fb_img ? wp_get_attachment_url($fb_img) : '';
+                        <div class="fanpage-grid">
+                            <?php
+                            // ===== Facebook =====
+                            $fb_img = get_field('fanpage_fb_image'); // ID ảnh
+                            $fb_url = get_field('fanpage_fb_url');
+                            $fb_img_url = $fb_img ? wp_get_attachment_url($fb_img) : '';
 
-      if ($fb_img_url && $fb_url): ?>
-        <a href="<?php echo esc_url($fb_url); ?>" class="fanpage-item" target="_blank">
-          <div class="fanpage-img" style="background-image:url('<?php echo esc_url($fb_img_url); ?>')">
-            <span class="fanpage-label">Facebook</span>
-          </div>
-        </a>
-      <?php endif; ?>
+                            if ($fb_img_url && $fb_url): ?>
+                                <a href="<?php echo esc_url($fb_url); ?>" class="fanpage-item" target="_blank">
+                                    <div class="fanpage-img" style="background-image:url('<?php echo esc_url($fb_img_url); ?>')">
+                                        <span class="fanpage-label">Facebook</span>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
 
+                            <?php
+                            // ===== YouTube =====
+                            $yt_img = get_field('fanpage_yt_image');
+                            $yt_url = get_field('fanpage_yt_url');
+                            $yt_img_url = $yt_img ? wp_get_attachment_url($yt_img) : '';
 
-      <?php
-      // ===== YouTube =====
-      $yt_img = get_field('fanpage_yt_image');
-      $yt_url = get_field('fanpage_yt_url');
-      $yt_img_url = $yt_img ? wp_get_attachment_url($yt_img) : '';
+                            if ($yt_img_url && $yt_url): ?>
+                                <a href="<?php echo esc_url($yt_url); ?>" class="fanpage-item" target="_blank">
+                                    <div class="fanpage-img" style="background-image:url('<?php echo esc_url($yt_img_url); ?>')">
+                                        <span class="fanpage-label">YouTube</span>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
 
-      if ($yt_img_url && $yt_url): ?>
-        <a href="<?php echo esc_url($yt_url); ?>" class="fanpage-item" target="_blank">
-          <div class="fanpage-img" style="background-image:url('<?php echo esc_url($yt_img_url); ?>')">
-            <span class="fanpage-label">YouTube</span>
-          </div>
-        </a>
-      <?php endif; ?>
+                            <?php
+                            // ===== Instagram =====
+                            $ig_img = get_field('fanpage_ig_image');
+                            $ig_url = get_field('fanpage_ig_url');
+                            $ig_img_url = $ig_img ? wp_get_attachment_url($ig_img) : '';
 
+                            if ($ig_img_url && $ig_url): ?>
+                                <a href="<?php echo esc_url($ig_url); ?>" class="fanpage-item" target="_blank">
+                                    <div class="fanpage-img" style="background-image:url('<?php echo esc_url($ig_img_url); ?>')">
+                                        <span class="fanpage-label">Instagram</span>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
 
-      <?php
-      // ===== Instagram =====
-      $ig_img = get_field('fanpage_ig_image');
-      $ig_url = get_field('fanpage_ig_url');
-      $ig_img_url = $ig_img ? wp_get_attachment_url($ig_img) : '';
+                            <?php
+                            // ===== Zalo =====
+                            $zalo_img = get_field('fanpage_zalo_image');
+                            $zalo_url = get_field('fanpage_zalo_url');
+                            $zalo_img_url = $zalo_img ? wp_get_attachment_url($zalo_img) : '';
 
-      if ($ig_img_url && $ig_url): ?>
-        <a href="<?php echo esc_url($ig_url); ?>" class="fanpage-item" target="_blank">
-          <div class="fanpage-img" style="background-image:url('<?php echo esc_url($ig_img_url); ?>')">
-            <span class="fanpage-label">Instagram</span>
-          </div>
-        </a>
-      <?php endif; ?>
-
-
-      <?php
-      // ===== Zalo =====
-      $zalo_img = get_field('fanpage_zalo_image');
-      $zalo_url = get_field('fanpage_zalo_url');
-      $zalo_img_url = $zalo_img ? wp_get_attachment_url($zalo_img) : '';
-
-      if ($zalo_img_url && $zalo_url): ?>
-        <a href="<?php echo esc_url($zalo_url); ?>" class="fanpage-item" target="_blank">
-          <div class="fanpage-img" style="background-image:url('<?php echo esc_url($zalo_img_url); ?>')">
-            <span class="fanpage-label">Zalo</span>
-          </div>
-        </a>
-      <?php endif; ?>
-    </div>
-  </div>
-</section>
-
-
+                            if ($zalo_img_url && $zalo_url): ?>
+                                <a href="<?php echo esc_url($zalo_url); ?>" class="fanpage-item" target="_blank">
+                                    <div class="fanpage-img" style="background-image:url('<?php echo esc_url($zalo_img_url); ?>')">
+                                        <span class="fanpage-label">Zalo</span>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </section>
             </article>
             <?php
         endwhile;

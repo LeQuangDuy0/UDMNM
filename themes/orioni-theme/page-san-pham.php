@@ -1,22 +1,17 @@
 <?php
 /* Template Name: san pham */
-
 get_header();
-
 /* ===== Lấy dữ liệu ACF (ưu tiên trên trang; nếu có Options Page thì fallback sang 'option') ===== */
 $prefer = function ($key) {
     $v = function_exists('get_field') ? get_field($key) : null;
     if (!empty($v)) return $v;
     return function_exists('get_field') ? get_field($key, 'option') : null;
 };
-
 $hero_img   = $prefer('hero_image');                         // Image (Array)
 $hero_title = $prefer('hero_title') ?: get_the_title();      // Text
-
 $overlay   = $prefer('hero_overlay_opacity');
 $overlay   = is_numeric($overlay) ? max(0, min(90, (int)$overlay)) : 55; // % (default 55)
 $height_vh = (int)($prefer('hero_height_vh') ?: 70);                       // default 70vh
-
 /* Ảnh nền: ưu tiên ACF image, nếu trống dùng Featured Image */
 $bg_url = '';
 if (is_array($hero_img) && !empty($hero_img['url'])) {
@@ -25,7 +20,6 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
     $bg_url = get_the_post_thumbnail_url(null, 'full');
 }
 ?>
-
 <section class="about-hero" style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay/100; ?>; <?php if ($bg_url) echo 'background-image:url('.esc_url($bg_url).');'; ?>">
   <div class="about-hero__overlay"></div>
   <div class="container">
@@ -34,7 +28,6 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
     </div>
   </div>
 </section>
-
 <!-- Breadcrumb dưới hero -->
 <?php
 // (Tuỳ chọn) Hỗ trợ lấy Primary Category của Yoast nếu có
@@ -48,15 +41,12 @@ if (!function_exists('yoast_get_primary_term_id')) {
         return 0;
     }
 }
-
 /** Breadcrumbs linh hoạt */
 function orioni_breadcrumbs() {
     $sep = '<span class="sep">|</span>';
     echo '<div class="crumbs">';
     echo '<a href="'.esc_url(home_url('/')).'">Trang chủ</a>';
-
     if (is_front_page()) { echo '</div>'; return; }
-
     // PAGE (có phân cấp cha/con)
     if (is_page()) {
         global $post;
@@ -67,7 +57,6 @@ function orioni_breadcrumbs() {
         echo ' '.$sep.' <span>'.esc_html(get_the_title()).'</span>';
         echo '</div>'; return;
     }
-
     // SINGLE (post)
     if (is_singular('post')) {
         global $post;
@@ -91,7 +80,6 @@ function orioni_breadcrumbs() {
         echo ' '.$sep.' <span>'.esc_html(get_the_title()).'</span>';
         echo '</div>'; return;
     }
-
     // SINGLE (CPT)
     if (is_singular()) {
         $pt = get_post_type();
@@ -104,7 +92,6 @@ function orioni_breadcrumbs() {
         echo ' '.$sep.' <span>'.esc_html(get_the_title()).'</span>';
         echo '</div>'; return;
     }
-
     // CATEGORY / TAX
     if (is_category() || is_tax()) {
         $term = get_queried_object();
@@ -118,7 +105,6 @@ function orioni_breadcrumbs() {
         echo ' '.$sep.' <span>'.esc_html(single_term_title('', false)).'</span>';
         echo '</div>'; return;
     }
-
     // ARCHIVES
     if (is_post_type_archive()) {
         $obj = get_post_type_object(get_post_type());
@@ -128,13 +114,11 @@ function orioni_breadcrumbs() {
     if (is_day())   { echo ' '.$sep.' <span>'.esc_html(get_the_date()).'</span>'; echo '</div>'; return; }
     if (is_month()) { echo ' '.$sep.' <span>'.esc_html(get_the_date('F Y')).'</span>'; echo '</div>'; return; }
     if (is_year())  { echo ' '.$sep.' <span>'.esc_html(get_the_date('Y')).'</span>'; echo '</div>'; return; }
-
     // SEARCH / 404 / TAG / AUTHOR
     if (is_search()) { echo ' '.$sep.' <span>Tìm kiếm: “'.esc_html(get_search_query()).'”</span>'; echo '</div>'; return; }
     if (is_tag())    { echo ' '.$sep.' <span>Thẻ: '.esc_html(single_tag_title('', false)).'</span>'; echo '</div>'; return; }
     if (is_author()) { $au = get_queried_object(); echo ' '.$sep.' <span>Tác giả: '.esc_html($au->display_name).'</span>'; echo '</div>'; return; }
     if (is_404())    { echo ' '.$sep.' <span>Không tìm thấy trang</span>'; echo '</div>'; return; }
-
     echo '</div>';
 }
 ?>
@@ -150,28 +134,23 @@ function orioni_breadcrumbs() {
   </div>
 </nav>
 <!-- Breadcrumb dưới hero - end -->
-
 <main class="container page-content">
   <?php the_content(); ?>
 </main>
-
 <?php
 /* ============================ THANH DANH MỤC ============================ */
 $page_id          = get_queried_object_id();
 $all_label        = get_field('all_label', $page_id) ?: 'Toàn bộ';
 $all_icon_id      = get_field('all_icon', $page_id);
 $topbar_limit     = (int) get_field('topbar_limit', $page_id) ?: 9;
-
 /* Số item/trang theo thiết bị (yêu cầu):
-   - Desktop: 4 cột × 7 hàng = 28
-   - Mobile/Tablet: 2 cột × 10 hàng = 20
+   - Desktop: 4 cột × 5 hàng = 20
+   - Mobile/Tablet: 2 cột × 7 hàng = 14
    Lưu ý: wp_is_mobile() dựa trên user-agent; nếu dùng cache cần bật “cache theo thiết bị”. */
 $is_mobile          = wp_is_mobile();
 $products_per_page  = $is_mobile ? (2*7) : (4*5);
-
 /* Đang lọc theo danh mục nào? (?cat=ID) */
 $current_term_id = isset($_GET['cat']) ? max(0, (int) $_GET['cat']) : 0;
-
 /* Lấy danh mục hiển thị trên thanh icon (do admin tick) */
 $terms = get_terms([
     'taxonomy'   => 'orion_cat',
@@ -183,26 +162,21 @@ $terms = get_terms([
     'number'     => $topbar_limit > 0 ? $topbar_limit : 0,
 ]);
 ?>
-
 <div class="container">
-
   <!-- Thanh category có nút trái/phải -->
   <div class="orioni-catwrap" data-catwrap>
     <button class="orioni-catbtn prev" type="button" aria-label="Danh mục trước" data-prev><span>‹</span></button>
-
     <div class="orioni-catbar" data-catbar>
       <?php
       // Mục "Toàn bộ"
       $all_img_html = $all_icon_id
         ? wp_get_attachment_image($all_icon_id, 'thumbnail', false, ['class'=>'circle'])
         : '<span class="orioni-catbar__ph"></span>';
-
       $all_cls = $current_term_id ? '' : ' is-active';
       echo '<a class="orioni-catbar__item'.$all_cls.'" href="'.esc_url(get_permalink($page_id)).'">
               <span class="orioni-catbar__img">'.$all_img_html.'</span>
               <span class="orioni-catbar__name">'.esc_html($all_label).'</span>
             </a>';
-
       // Các danh mục do admin chọn
       if (!empty($terms) && !is_wp_error($terms)) {
         foreach ($terms as $t) {
@@ -219,11 +193,9 @@ $terms = get_terms([
       }
       ?>
     </div>
-
     <button class="orioni-catbtn next" type="button" aria-label="Danh mục tiếp" data-next><span>›</span></button>
   </div>
   <!-- /Thanh category -->
-
   <?php
   /* ============================ QUERY SẢN PHẨM ============================ */
   // Trang hiện tại (ổn cho cả khi loop nằm trong 1 Page)
@@ -231,7 +203,6 @@ $paged = get_query_var('paged');
 if (empty($paged)) {
   $paged = get_query_var('page') ? (int) get_query_var('page') : 1;
 }
-
 // Query sản phẩm
 $args = [
   'post_type'      => 'orion_product',
@@ -240,7 +211,6 @@ $args = [
   'orderby'        => 'date',
   'order'          => 'DESC',
 ];
-
 if ($current_term_id) {
   $args['tax_query'] = [[
     'taxonomy' => 'orion_cat',
@@ -248,82 +218,79 @@ if ($current_term_id) {
     'terms'    => $current_term_id,
   ]];
 }
+$q = new WP_Query($args);
+?>
+<!-- ... vòng lặp in sản phẩm ... -->
+<?php
+/* ====== LẤY TRANG HIỆN TẠI CHUẨN CHO PAGE ====== */
+$paged = get_query_var('paged') ? absint(get_query_var('paged'))
+        : ( get_query_var('page') ? absint(get_query_var('page')) : 1 );
+
+/* ====== TRUY VẤN SẢN PHẨM ====== */
+$per_page = (int) ($products_per_page ?? 12); // hoặc số cố định 12
+$args = [
+  'post_type'              => 'orion_product',
+  'posts_per_page'         => $per_page,
+  'paged'                  => $paged,
+  'ignore_sticky_posts'    => true,
+  'no_found_rows'          => false, // bắt buộc để phân trang tính được tổng trang
+];
+if ( !empty($current_term_id) ) {
+  $args['tax_query'] = [[
+    'taxonomy' => 'orion_cat',
+    'field'    => 'term_id',
+    'terms'    => (int) $current_term_id,
+  ]];
+}
 
 $q = new WP_Query($args);
 ?>
 
-<!-- ... vòng lặp in sản phẩm ... -->
+<p class="orioni-count">
+  Tìm thấy <span class="orioni-count__num"><?php echo (int) $q->found_posts; ?></span> sản phẩm
+</p>
+
+<ul class="products orioni-grid">
+<?php if ( $q->have_posts() ) : while ( $q->have_posts() ) : $q->the_post(); ?>
+  <?php
+  $img_id     = get_field('product_image') ?: get_post_thumbnail_id();
+  $title_main = get_the_title();
+  $title_sub  = trim((string) get_field('title_sub'));
+  $desc       = get_field('short_desc') ?: wp_trim_words(get_the_excerpt(), 18);
+  ?>
+  <li class="orioni-card">
+    <a href="<?php the_permalink(); ?>" class="orioni-card__link">
+      <div class="orioni-card__frame">
+        <?php if ($img_id) echo wp_get_attachment_image($img_id, 'large', false, ['loading'=>'lazy']); ?>
+      </div>
+      <h3 class="orioni-card__title"><?php echo esc_html($title_main); ?></h3>
+      <?php if ($title_sub !== ''): ?>
+        <div class="orioni-card__subtitle"><?php echo esc_html($title_sub); ?></div>
+      <?php endif; ?>
+      <p class="orioni-card__desc"><?php echo esc_html($desc); ?></p>
+    </a>
+  </li>
+<?php endwhile; else: ?>
+  <li>Chưa có sản phẩm.</li>
+<?php endif; ?>
+</ul>
 
 <?php
-// Paginate: tự nhận dạng permalink để build đúng /page/2 hoặc ?paged=2
-$big    = 999999999;
-$base   = str_replace($big, '%#%', esc_url(get_pagenum_link($big)));
-$format = get_option('permalink_structure') ? 'page/%#%/' : '&paged=%#%';
-
+/* ====== PHÂN TRANG ====== */
 echo '<nav class="pagination">' .
-  paginate_links([
-    'base'      => $base,
-    'format'    => $format,
-    'current'   => max(1, (int) $paged),
-    'total'     => (int) $q->max_num_pages,
-    'add_args'  => $current_term_id ? ['cat' => $current_term_id] : [],
+  paginate_links( [
+    'base'      => add_query_arg( 'paged', '%#%' ),
+    'format'    => '',               // vì đã dùng add_query_arg
+    'current'   => max(1, $paged),
+    'total'     => max(1, (int) $q->max_num_pages),
+    'add_args'  => !empty($current_term_id) ? ['cat' => (int) $current_term_id] : false,
     'prev_text' => '«',
     'next_text' => '»',
-  ]) .
-'</nav>';
+  ] ) .
+  '</nav>';
 
 wp_reset_postdata();
 ?>
 
-  <p class="orioni-count">
-    Tìm thấy <span class="orioni-count__num"><?php echo (int)$q->found_posts; ?></span> sản phẩm
-  </p>
-
-  <ul class="products orioni-grid">
-  <?php if ($q->have_posts()): while ($q->have_posts()): $q->the_post(); ?>
-    <?php
-      $img_id     = get_field('product_image') ?: get_post_thumbnail_id();
-      $title_main = get_the_title();
-      $title_sub  = trim((string) get_field('title_sub'));
-      $desc       = get_field('short_desc') ?: wp_trim_words(get_the_excerpt(), 18);
-    ?>
-    <li class="orioni-card">
-      <a href="<?php the_permalink(); ?>" class="orioni-card__link">
-        <div class="orioni-card__frame">
-          <?php if ($img_id) echo wp_get_attachment_image($img_id, 'large', false, ['loading'=>'lazy']); ?>
-        </div>
-        <h3 class="orioni-card__title"><?php echo esc_html($title_main); ?></h3>
-        <?php if ($title_sub !== ''): ?>
-          <div class="orioni-card__subtitle"><?php echo esc_html($title_sub); ?></div>
-        <?php endif; ?>
-        <p class="orioni-card__desc"><?php echo esc_html($desc); ?></p>
-      </a>
-    </li>
-  <?php endwhile; else: ?>
-    <li>Chưa có sản phẩm.</li>
-  <?php endif; wp_reset_postdata(); ?>
-  </ul>
-
-  <?php
-  /* ============================ PHÂN TRANG ============================ */
-  $big  = 999999999;
-  $base = str_replace($big, '%#%', esc_url(get_pagenum_link($big)));
-
-  echo '<nav class="orioni-pagination">';
-  echo paginate_links([
-      'base'      => $base,
-      'format'    => get_option('permalink_structure') ? 'page/%#%/' : '?paged=%#%',
-      'current'   => max(1, $paged),
-      'total'     => $q->max_num_pages,
-      'mid_size'  => 2,
-      'prev_text' => '&laquo;',
-      'next_text' => '&raquo;',
-      'type'      => 'list', // trả về <ul><li>...</li></ul>
-      'add_args'  => $current_term_id ? ['cat' => $current_term_id] : [],
-  ]);
-  echo '</nav>';
-  ?>
-
 </div>
-
 <?php get_footer(); ?>

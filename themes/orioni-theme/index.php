@@ -1,5 +1,4 @@
 <?php get_header(); ?>
-
 <div class="container">
   <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
     <article <?php post_class(); ?>>
@@ -12,5 +11,4 @@
     <p><?php _e('No posts found', 'orioni-theme'); ?></p>
   <?php endif; ?>
 </div>
-
 <?php get_footer(); ?>

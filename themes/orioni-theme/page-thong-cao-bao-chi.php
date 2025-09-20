@@ -1,8 +1,6 @@
 <?php
 /* Template Name: thong-cao-bao-chi */
-
 get_header();
-
 /* ===== Lấy dữ liệu ACF (ưu tiên trên trang; nếu có Options Page thì fallback sang 'option') ===== */
 $prefer = function ($key) {
   $v = function_exists('get_field') ? get_field($key) : null;
@@ -10,16 +8,12 @@ $prefer = function ($key) {
     return $v;
   return function_exists('get_field') ? get_field($key, 'option') : null;
 };
-
 $hero_img = $prefer('hero_image');                       // Image (Array)
 $hero_title = $prefer('hero_title') ?: get_the_title();    // Text
-
 $overlay = $prefer('hero_overlay_opacity');
 $overlay = is_numeric($overlay) ? max(0, min(90, (int) $overlay)) : 55; // % (default 55)
-
 $height_vh = $prefer('hero_height_vh');
 $height_vh = (int) ($height_vh ?: 70); // default 70vh
-
 /* Ảnh nền: ưu tiên ACF image, nếu trống dùng Featured Image */
 $bg_url = '';
 if (is_array($hero_img) && !empty($hero_img['url'])) {
@@ -28,9 +22,7 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
   $bg_url = get_the_post_thumbnail_url(null, 'full');
 }
 ?>
-
-<section class="about-hero"
-  style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay / 100; ?>; <?php if ($bg_url)
+<section class="about-hero" style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay / 100; ?>; <?php if ($bg_url)
           echo 'background-image:url(' . esc_url($bg_url) . ');'; ?>">
   <div class="about-hero__overlay"></div>
   <div class="container">
@@ -39,125 +31,153 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
     </div>
   </div>
 </section>
-
 <!-- Breadcrumb dưới hero -->
-
 <?php
 // (Tuỳ chọn) Hỗ trợ lấy Primary Category của Yoast nếu có
-if ( ! function_exists('yoast_get_primary_term_id') ) {
-  function yoast_get_primary_term_id( $taxonomy, $post_id ) {
-    if ( class_exists('WPSEO_Primary_Term') ) {
-      $primary = new WPSEO_Primary_Term( $taxonomy, $post_id );
+if (!function_exists('yoast_get_primary_term_id')) {
+  function yoast_get_primary_term_id($taxonomy, $post_id)
+  {
+    if (class_exists('WPSEO_Primary_Term')) {
+      $primary = new WPSEO_Primary_Term($taxonomy, $post_id);
       $term_id = (int) $primary->get_primary_term();
       return $term_id > 0 ? $term_id : 0;
     }
     return 0;
   }
 }
-
 /**
  * Breadcrumbs linh hoạt
  */
-function orioni_breadcrumbs() {
+function orioni_breadcrumbs()
+{
   $sep = '<span class="sep">|</span>';
   echo '<div class="crumbs">';
-  echo '<a href="'. esc_url( home_url('/') ) .'">Trang chủ</a>';
-
-  if ( is_front_page() ) { echo '</div>'; return; }
-
-  // PAGE (có phân cấp cha/con)
-  if ( is_page() ) {
-    global $post;
-    $ancestors = array_reverse( get_post_ancestors( $post->ID ) );
-    foreach ( $ancestors as $ancestor_id ) {
-      echo ' '. $sep .' <a href="'. esc_url( get_permalink($ancestor_id) ) .'">'. esc_html( get_the_title($ancestor_id) ) .'</a>';
-    }
-    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+  echo '<a href="' . esc_url(home_url('/')) . '">Trang chủ</a>';
+  if (is_front_page()) {
     echo '</div>';
     return;
   }
-
+  // PAGE (có phân cấp cha/con)
+  if (is_page()) {
+    global $post;
+    $ancestors = array_reverse(get_post_ancestors($post->ID));
+    foreach ($ancestors as $ancestor_id) {
+      echo ' ' . $sep . ' <a href="' . esc_url(get_permalink($ancestor_id)) . '">' . esc_html(get_the_title($ancestor_id)) . '</a>';
+    }
+    echo ' ' . $sep . ' <span>' . esc_html(get_the_title()) . '</span>';
+    echo '</div>';
+    return;
+  }
   // SINGLE (bài viết thường)
-  if ( is_singular('post') ) {
+  if (is_singular('post')) {
     global $post;
     // Yoast primary category trước, sau đó đến category đầu tiên
     $cat_id = yoast_get_primary_term_id('category', $post->ID);
-    if ( ! $cat_id ) {
-      $cats = get_the_category( $post->ID );
-      if ( ! empty($cats) ) $cat_id = $cats[0]->term_id;
+    if (!$cat_id) {
+      $cats = get_the_category($post->ID);
+      if (!empty($cats))
+        $cat_id = $cats[0]->term_id;
     }
-    if ( $cat_id ) {
+    if ($cat_id) {
       // Chuỗi cha của category
       $chain = [];
-      $term = get_term( $cat_id, 'category' );
-      while ( $term && ! is_wp_error($term) ) {
+      $term = get_term($cat_id, 'category');
+      while ($term && !is_wp_error($term)) {
         $chain[] = $term;
-        if ( $term->parent ) $term = get_term( $term->parent, 'category' );
-        else break;
+        if ($term->parent)
+          $term = get_term($term->parent, 'category');
+        else
+          break;
       }
-      $chain = array_reverse( $chain );
-      foreach ( $chain as $t ) {
-        echo ' '. $sep .' <a href="'. esc_url( get_term_link($t) ) .'">'. esc_html( $t->name ) .'</a>';
+      $chain = array_reverse($chain);
+      foreach ($chain as $t) {
+        echo ' ' . $sep . ' <a href="' . esc_url(get_term_link($t)) . '">' . esc_html($t->name) . '</a>';
       }
     }
-    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo ' ' . $sep . ' <span>' . esc_html(get_the_title()) . '</span>';
     echo '</div>';
     return;
   }
-
   // SINGLE (CPT)
-  if ( is_singular() ) {
+  if (is_singular()) {
     $pt = get_post_type();
-    if ( $pt && $pt !== 'post' ) {
-      $obj = get_post_type_object( $pt );
-      if ( $obj && ! empty($obj->has_archive) ) {
-        echo ' '. $sep .' <a href="'. esc_url( get_post_type_archive_link($pt) ) .'">'. esc_html( $obj->labels->name ) .'</a>';
+    if ($pt && $pt !== 'post') {
+      $obj = get_post_type_object($pt);
+      if ($obj && !empty($obj->has_archive)) {
+        echo ' ' . $sep . ' <a href="' . esc_url(get_post_type_archive_link($pt)) . '">' . esc_html($obj->labels->name) . '</a>';
       }
     }
-    echo ' '. $sep .' <span>'. esc_html( get_the_title() ) .'</span>';
+    echo ' ' . $sep . ' <span>' . esc_html(get_the_title()) . '</span>';
     echo '</div>';
     return;
   }
-
   // CATEGORY / TAXONOMY
-  if ( is_category() || is_tax() ) {
+  if (is_category() || is_tax()) {
     $term = get_queried_object();
-    if ( $term && $term->parent ) {
-      $parents = array_reverse( get_ancestors( $term->term_id, $term->taxonomy ) );
-      foreach ( $parents as $pid ) {
-        $p = get_term( $pid, $term->taxonomy );
-        echo ' '. $sep .' <a href="'. esc_url( get_term_link($p) ) .'">'. esc_html( $p->name ) .'</a>';
+    if ($term && $term->parent) {
+      $parents = array_reverse(get_ancestors($term->term_id, $term->taxonomy));
+      foreach ($parents as $pid) {
+        $p = get_term($pid, $term->taxonomy);
+        echo ' ' . $sep . ' <a href="' . esc_url(get_term_link($p)) . '">' . esc_html($p->name) . '</a>';
       }
     }
-    echo ' '. $sep .' <span>'. esc_html( single_term_title('', false) ) .'</span>';
+    echo ' ' . $sep . ' <span>' . esc_html(single_term_title('', false)) . '</span>';
     echo '</div>';
     return;
   }
-
   // ARCHIVES
-  if ( is_post_type_archive() ) {
-    $obj = get_post_type_object( get_post_type() );
-    echo ' '. $sep .' <span>'. esc_html( $obj ? $obj->labels->name : 'Lưu trữ' ) .'</span>';
-    echo '</div>'; return;
+  if (is_post_type_archive()) {
+    $obj = get_post_type_object(get_post_type());
+    echo ' ' . $sep . ' <span>' . esc_html($obj ? $obj->labels->name : 'Lưu trữ') . '</span>';
+    echo '</div>';
+    return;
   }
-  if ( is_day() )   { echo ' '. $sep .' <span>'. esc_html( get_the_date() ) .'</span>'; echo '</div>'; return; }
-  if ( is_month() ) { echo ' '. $sep .' <span>'. esc_html( get_the_date('F Y') ) .'</span>'; echo '</div>'; return; }
-  if ( is_year() )  { echo ' '. $sep .' <span>'. esc_html( get_the_date('Y') ) .'</span>'; echo '</div>'; return; }
+  if (is_day()) {
+    echo ' ' . $sep . ' <span>' . esc_html(get_the_date()) . '</span>';
+    echo '</div>';
+    return;
+  }
+  if (is_month()) {
+    echo ' ' . $sep . ' <span>' . esc_html(get_the_date('F Y')) . '</span>';
+    echo '</div>';
+    return;
+  }
+  if (is_year()) {
+    echo ' ' . $sep . ' <span>' . esc_html(get_the_date('Y')) . '</span>';
+    echo '</div>';
+    return;
+  }
 
   // SEARCH / 404 / TAG / AUTHOR
-  if ( is_search() ) { echo ' '. $sep .' <span>Tìm kiếm: “'. esc_html( get_search_query() ) .'”</span>'; echo '</div>'; return; }
-  if ( is_tag() )    { echo ' '. $sep .' <span>Thẻ: '. esc_html( single_tag_title('', false) ) .'</span>'; echo '</div>'; return; }
-  if ( is_author() ) { $au = get_queried_object(); echo ' '. $sep .' <span>Tác giả: '. esc_html( $au->display_name ) .'</span>'; echo '</div>'; return; }
-  if ( is_404() )    { echo ' '. $sep .' <span>Không tìm thấy trang</span>'; echo '</div>'; return; }
-
+  if (is_search()) {
+    echo ' ' . $sep . ' <span>Tìm kiếm: “' . esc_html(get_search_query()) . '”</span>';
+    echo '</div>';
+    return;
+  }
+  if (is_tag()) {
+    echo ' ' . $sep . ' <span>Thẻ: ' . esc_html(single_tag_title('', false)) . '</span>';
+    echo '</div>';
+    return;
+  }
+  if (is_author()) {
+    $au = get_queried_object();
+    echo ' ' . $sep . ' <span>Tác giả: ' . esc_html($au->display_name) . '</span>';
+    echo '</div>';
+    return;
+  }
+  if (is_404()) {
+    echo ' ' . $sep . ' <span>Không tìm thấy trang</span>';
+    echo '</div>';
+    return;
+  }
   echo '</div>';
 }
 ?>
 <nav class="about-breadcrumbs">
   <div class="container">
     <?php
-    if ( function_exists('yoast_breadcrumb') ) {
-      yoast_breadcrumb('<div class="crumbs">','</div>');
+    if (function_exists('yoast_breadcrumb')) {
+      yoast_breadcrumb('<div class="crumbs">', '</div>');
     } else {
       orioni_breadcrumbs(); // fallback tuỳ biến
     }
@@ -165,7 +185,6 @@ function orioni_breadcrumbs() {
   </div>
 </nav>
 <!-- Breadcrumb dưới hero - end -->
- 
 <?php
 // Lấy 2 trang con theo đường dẫn (đổi nếu slug khác)
 $thong_cao_bao_chi = get_page_by_path('tin-tuc/thong-cao-bao-chi');
@@ -180,7 +199,6 @@ $current_id = get_queried_object_id();
         Thông cáo báo chí
       </a>
     <?php endif; ?>
-
     <?php if ($thong_tin_san_pham): ?>
       <a class="about-switch__item <?php echo ($current_id === $thong_tin_san_pham->ID) ? 'is-active' : ''; ?>"
         href="<?php echo esc_url(get_permalink($thong_tin_san_pham->ID)); ?>">
@@ -189,15 +207,10 @@ $current_id = get_queried_object_id();
     <?php endif; ?>
   </div>
 </div>
-
-
-
 <?php
 echo do_shortcode('[press_grid per_page="6"]');
-
 $link = function_exists('get_field') ? trim((string) get_field('external_url')) : '';
-$url  = $link !== '' ? esc_url($link) : get_permalink();
-
+$url = $link !== '' ? esc_url($link) : get_permalink();
 // Ảnh: ưu tiên card_image
 $img_id = function_exists('get_field') ? (int) get_field('card_image') : 0;
 $img_html = '';
@@ -208,19 +221,16 @@ if ($img_id) {
 } else {
   $img_html = '<div class="ph"></div>';
 }
-
 // Phụ đề
 $subtitle = function_exists('get_field') ? trim((string) get_field('subtitle')) : '';
 if ($subtitle === '') {
   $excerpt = wp_strip_all_tags(get_the_excerpt());
-  if ($excerpt) $subtitle = wp_trim_words($excerpt, 22);
+  if ($excerpt)
+    $subtitle = wp_trim_words($excerpt, 22);
 }
-
 // Ngày hiển thị
 $display = function_exists('get_field') ? (string) get_field('display_date') : '';
 $datetime = $display !== '' ? date('c', strtotime($display)) : get_the_date('c');
 $date_txt = $display !== '' ? date_i18n(get_option('date_format'), strtotime($display)) : get_the_date();
 ?>
-
-
 <?php get_footer(); ?>

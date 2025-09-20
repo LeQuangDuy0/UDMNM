@@ -1,8 +1,6 @@
 <?php
 /* Template Name: thong-tin-san-pham */
-
 get_header();
-
 /* ===== Lấy dữ liệu ACF (ưu tiên trên trang; nếu có Options Page thì fallback sang 'option') ===== */
 $prefer = function ($key) {
   $v = function_exists('get_field') ? get_field($key) : null;
@@ -10,16 +8,12 @@ $prefer = function ($key) {
     return $v;
   return function_exists('get_field') ? get_field($key, 'option') : null;
 };
-
 $hero_img = $prefer('hero_image');                       // Image (Array)
 $hero_title = $prefer('hero_title') ?: get_the_title();    // Text
-
 $overlay = $prefer('hero_overlay_opacity');
 $overlay = is_numeric($overlay) ? max(0, min(90, (int) $overlay)) : 55; // % (default 55)
-
 $height_vh = $prefer('hero_height_vh');
 $height_vh = (int) ($height_vh ?: 70); // default 70vh
-
 /* Ảnh nền: ưu tiên ACF image, nếu trống dùng Featured Image */
 $bg_url = '';
 if (is_array($hero_img) && !empty($hero_img['url'])) {
@@ -28,7 +22,6 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
   $bg_url = get_the_post_thumbnail_url(null, 'full');
 }
 ?>
-
 <section class="about-hero"
   style="--h:<?php echo $height_vh; ?>vh; --ov:<?php echo $overlay / 100; ?>; <?php if ($bg_url)
           echo 'background-image:url(' . esc_url($bg_url) . ');'; ?>">
@@ -39,9 +32,7 @@ if (is_array($hero_img) && !empty($hero_img['url'])) {
     </div>
   </div>
 </section>
-
 <!-- Breadcrumb dưới hero -->
-
 <?php
 // (Tuỳ chọn) Hỗ trợ lấy Primary Category của Yoast nếu có
 if ( ! function_exists('yoast_get_primary_term_id') ) {
@@ -54,7 +45,6 @@ if ( ! function_exists('yoast_get_primary_term_id') ) {
     return 0;
   }
 }
-
 /**
  * Breadcrumbs linh hoạt
  */
@@ -62,9 +52,7 @@ function orioni_breadcrumbs() {
   $sep = '<span class="sep">|</span>';
   echo '<div class="crumbs">';
   echo '<a href="'. esc_url( home_url('/') ) .'">Trang chủ</a>';
-
   if ( is_front_page() ) { echo '</div>'; return; }
-
   // PAGE (có phân cấp cha/con)
   if ( is_page() ) {
     global $post;
@@ -76,7 +64,6 @@ function orioni_breadcrumbs() {
     echo '</div>';
     return;
   }
-
   // SINGLE (bài viết thường)
   if ( is_singular('post') ) {
     global $post;
@@ -104,7 +91,6 @@ function orioni_breadcrumbs() {
     echo '</div>';
     return;
   }
-
   // SINGLE (CPT)
   if ( is_singular() ) {
     $pt = get_post_type();
@@ -118,7 +104,6 @@ function orioni_breadcrumbs() {
     echo '</div>';
     return;
   }
-
   // CATEGORY / TAXONOMY
   if ( is_category() || is_tax() ) {
     $term = get_queried_object();
@@ -133,7 +118,6 @@ function orioni_breadcrumbs() {
     echo '</div>';
     return;
   }
-
   // ARCHIVES
   if ( is_post_type_archive() ) {
     $obj = get_post_type_object( get_post_type() );
@@ -149,7 +133,6 @@ function orioni_breadcrumbs() {
   if ( is_tag() )    { echo ' '. $sep .' <span>Thẻ: '. esc_html( single_tag_title('', false) ) .'</span>'; echo '</div>'; return; }
   if ( is_author() ) { $au = get_queried_object(); echo ' '. $sep .' <span>Tác giả: '. esc_html( $au->display_name ) .'</span>'; echo '</div>'; return; }
   if ( is_404() )    { echo ' '. $sep .' <span>Không tìm thấy trang</span>'; echo '</div>'; return; }
-
   echo '</div>';
 }
 ?>
@@ -165,7 +148,6 @@ function orioni_breadcrumbs() {
   </div>
 </nav>
 <!-- Breadcrumb dưới hero - end -->
- 
 <?php
 // Lấy 2 trang con theo đường dẫn (đổi nếu slug khác)
 $thong_cao_bao_chi = get_page_by_path('tin-tuc/thong-cao-bao-chi');
@@ -180,7 +162,6 @@ $current_id = get_queried_object_id();
         Thông cáo báo chí
       </a>
     <?php endif; ?>
-
     <?php if ($thong_tin_san_pham): ?>
       <a class="about-switch__item <?php echo ($current_id === $thong_tin_san_pham->ID) ? 'is-active' : ''; ?>"
         href="<?php echo esc_url(get_permalink($thong_tin_san_pham->ID)); ?>">
@@ -189,14 +170,10 @@ $current_id = get_queried_object_id();
     <?php endif; ?>
   </div>
 </div>
-
-
 <?php
 echo do_shortcode('[productinfo_grid per_page="6"]');
-
 $link = function_exists('get_field') ? trim((string) get_field('external_url')) : '';
 $url  = $link !== '' ? esc_url($link) : get_permalink();
-
 // Ảnh: ưu tiên card_image
 $img_id = function_exists('get_field') ? (int) get_field('card_image') : 0;
 $img_html = '';
@@ -207,23 +184,15 @@ if ($img_id) {
 } else {
   $img_html = '<div class="ph"></div>';
 }
-
 // Phụ đề
 $subtitle = function_exists('get_field') ? trim((string) get_field('subtitle')) : '';
 if ($subtitle === '') {
   $excerpt = wp_strip_all_tags(get_the_excerpt());
   if ($excerpt) $subtitle = wp_trim_words($excerpt, 22);
 }
-
 // Ngày hiển thị
 $display = function_exists('get_field') ? (string) get_field('display_date') : '';
 $datetime = $display !== '' ? date('c', strtotime($display)) : get_the_date('c');
 $date_txt = $display !== '' ? date_i18n(get_option('date_format'), strtotime($display)) : get_the_date();
 ?>
-
-
-
-
-
-
 <?php get_footer(); ?>
