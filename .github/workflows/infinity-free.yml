@@ -1,26 +1,36 @@
 name: 🚀 Deploy to orionimoi.wuaze.com
 
 on:
-  workflow_dispatch: # Uncomment below to deploy on push instead
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+    paths:
+      - '**'         # hoặc thu hẹp: 'themes/**', 'plugins/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
-    name: 🎉 Deploy to your_domain_name
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🚚 Get latest code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 📂 Sync files via FTP
+      - name: FTP Deploy wp-content
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ftpupload.net # Change if using another host
+          server: ftpupload.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /htdocs/ # Replace with your correct path
-          retries: 3
-          retryDelay: 10
+          server-dir: /htdocs/ex/ORIONI/wp-content/   # THƯ MỤC TRÊN HOST
+          local-dir: ./                               # ROOT REPO = wp-content
+          state-name: wp-content-orioni               # để lần sau chỉ up file đổi
+          timeout: 600000
+          exclude: |
+            **/.git*
+            **/.github/**
+            **/node_modules/**
+            **/vendor/**
+            **/.env
+            **/*.log
+            **/debug.log
+            upgrade/**
+            upgrade-temp-backup/**
