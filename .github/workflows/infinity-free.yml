@@ -1,4 +1,4 @@
-name: 🚀 Deploy orionimoi.wuaze.com
+name: 🚀 Deploy wp-content (orionimoi.wuaze.com)
 
 on:
   push:
@@ -14,22 +14,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: FTP Deploy wp-content
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - uses: actions/checkout@v4
+      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ftpupload.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /htdocs/wp-content/   # ĐÚNG: đẩy vào wp-content của site
-          local-dir: ./                     # repo = wp-content
-          state-name: wp-content-root
+          server-dir: /orionimoi.wuaze.com/htdocs/wp-content/
+          local-dir: ./
+          state-name: wpcontent-orion-root
           timeout: 600000
           exclude: |
+            **/.git/**
             **/.git*
             **/.github/**
+            **/.vscode/**
             **/node_modules/**
             **/vendor/**
             **/.env
