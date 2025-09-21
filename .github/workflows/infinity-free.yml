@@ -23,9 +23,9 @@ jobs:
           server: ftpupload.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /htdocs/wp-content/    # ĐẨY LÊN GỐC (ROOT) WP
-          local-dir: ./                      # ROOT REPO = wp-content
-          state-name: wp-content-root        # để lần sau chỉ up file đổi
+          server-dir: /htdocs/wp-content/   # ĐÚNG: đẩy vào wp-content của site
+          local-dir: ./                     # repo = wp-content
+          state-name: wp-content-root
           timeout: 600000
           exclude: |
             **/.git*
