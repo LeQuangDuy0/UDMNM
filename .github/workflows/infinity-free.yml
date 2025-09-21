@@ -1,10 +1,12 @@
-name: 🚀 Deploy to orionimoi.wuaze.com
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - '**'         # hoặc thu hẹp: 'themes/**', 'plugins/**'
+      - 'themes/**'
+      - 'plugins/**'
+      - 'mu-plugins/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
@@ -20,9 +22,9 @@ jobs:
           server: ftpupload.net
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /htdocs/ex/ORIONI/wp-content/   # THƯ MỤC TRÊN HOST
-          local-dir: ./                               # ROOT REPO = wp-content
-          state-name: wp-content-orioni               # để lần sau chỉ up file đổi
+          server-dir: /htdocs/wp-content/    # ĐẨY LÊN GỐC (ROOT) WP
+          local-dir: ./                      # ROOT REPO = wp-content
+          state-name: wp-content-root        # để lần sau chỉ up file đổi
           timeout: 600000
           exclude: |
             **/.git*
@@ -32,5 +34,6 @@ jobs:
             **/.env
             **/*.log
             **/debug.log
+            uploads/**
             upgrade/**
             upgrade-temp-backup/**
