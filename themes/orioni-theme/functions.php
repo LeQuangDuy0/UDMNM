@@ -488,52 +488,32 @@ if (!function_exists('orioni_get_post_card_image_html')) {
   }
 }
 
-/** Quan hệ cộng đồng: CPT + Taxonomy */
 add_action('init', function () {
-    // ----- CPT: Bài viết Quan hệ Cộng đồng -----
-    $labels = [
-        'name'               => 'Quan hệ cộng đồng',
-        'singular_name'      => 'Bài cộng đồng',
-        'add_new'            => 'Thêm bài',
-        'add_new_item'       => 'Thêm bài cộng đồng',
-        'edit_item'          => 'Sửa bài cộng đồng',
-        'new_item'           => 'Bài cộng đồng mới',
-        'view_item'          => 'Xem bài cộng đồng',
-        'search_items'       => 'Tìm bài cộng đồng',
-        'not_found'          => 'Chưa có bài',
-        'not_found_in_trash' => 'Không có trong thùng rác',
-        'all_items'          => 'Tất cả bài cộng đồng',
-        'menu_name'          => 'Quan hệ cộng đồng',
-    ];
-    register_post_type('orioni_comm', [
-        'labels'        => $labels,
-        'public'        => true,
-        'menu_position' => 6,
-        'menu_icon'     => 'dashicons-groups',
-        'supports'      => ['title','editor','thumbnail','excerpt','author','revisions'],
-        'has_archive'   => true,
-        'rewrite'       => ['slug' => 'quan-he-cong-dong', 'with_front' => false],
-        'show_in_rest'  => true,
-    ]);
+  register_post_type('orioni_comm', [
+    'labels' => [
+      'name'          => 'Quan hệ cộng đồng',
+      'singular_name' => 'Bài cộng đồng',
+      'add_new'       => 'Thêm bài',
+      'add_new_item'  => 'Thêm bài cộng đồng',
+      'edit_item'     => 'Sửa bài cộng đồng',
+      'new_item'      => 'Bài cộng đồng mới',
+      'view_item'     => 'Xem bài cộng đồng',
+      'search_items'  => 'Tìm bài cộng đồng',
+      'all_items'     => 'Tất cả bài cộng đồng',
+      'menu_name'     => 'Quan hệ cộng đồng',
+    ],
+    'public'        => true,
+    'show_ui'       => true,
 
-    // ----- Taxonomy: Chủ đề (Đạo đức kinh doanh / Hoạt động xã hội) -----
-    $t_labels = [
-        'name'              => 'Chủ đề',
-        'singular_name'     => 'Chủ đề',
-        'search_items'      => 'Tìm chủ đề',
-        'all_items'         => 'Tất cả chủ đề',
-        'edit_item'         => 'Sửa chủ đề',
-        'update_item'       => 'Cập nhật chủ đề',
-        'add_new_item'      => 'Thêm chủ đề',
-        'new_item_name'     => 'Tên chủ đề',
-        'menu_name'         => 'Chủ đề',
-    ];
-    register_taxonomy('community_topic', ['orioni_comm'], [
-        'hierarchical'  => true, // cho phép phân cấp (nếu cần)
-        'labels'        => $t_labels,
-        'show_ui'       => true,
-        'show_admin_column' => true,
-        'rewrite'       => ['slug' => 'chu-de', 'with_front' => false],
-        'show_in_rest'  => true,
-    ]);
+    // 👇 Đặt CPT dưới menu "Bài viết/Posts"
+    'show_in_menu'  => 'edit.php',   // nếu muốn nằm dưới "Trang/Pages": 'edit.php?post_type=page'
+
+    'supports'      => ['title','editor','thumbnail','excerpt','author','revisions'],
+    'has_archive'   => true,
+    'rewrite'       => ['slug' => 'quan-he-cong-dong','with_front' => false],
+    'show_in_rest'  => true,
+
+    // (tuỳ chọn) muốn quản lý giống post hơn nữa thì dùng chung category/tag
+    // 'taxonomies'    => ['category','post_tag'],
+  ]);
 });

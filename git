@@ -1,0 +1,1 @@
+exORIONIwp-content log --oneline --left-right --graph origin/main...main -n 20
