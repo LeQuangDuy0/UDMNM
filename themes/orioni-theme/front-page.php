@@ -2,19 +2,18 @@
 get_header(); 
 ?>
 <?php
+// front-page.php — chỉ router
 $lang = function_exists('pll_current_language') ? pll_current_language('slug') : 'vi';
 
-// Nếu English → nhúng file trang chủ EN
-if ($lang === 'en') {
-  // Đường dẫn file bạn muốn dùng cho EN
-  // Ví dụ: /wp-content/themes/orioni-theme/page-home-us.php
-  include locate_template('page-home-us.php', false, false);
-  get_footer();
+// Chọn file theo ngôn ngữ
+$template = ($lang === 'en') ? 'page-home-us.php' : 'page-home-vi.php';
+
+// Tìm và nạp file
+if ($path = locate_template($template, false, false)) {
+  include $path; // file đích tự gọi get_header/get_footer
   return;
 }
 
-// Ngược lại mặc định VI
-include locate_template('front-page.php', false, false);
 ?>
 <main class="site-page">
     <?php
