@@ -1,4 +1,6 @@
 <?php get_header(); 
+?>
+<?php
 $lang = function_exists('pll_current_language') ? pll_current_language('slug') : 'vi';
 
 // Nếu English → nhúng file trang chủ EN
@@ -11,8 +13,8 @@ if ($lang === 'en') {
 }
 
 // Ngược lại mặc định VI
-include locate_template('page-home-vi.php', false, false);?>
-
+include locate_template('page-home-vi.php', false, false);
+?>
 <main class="site-page">
     <?php
     if (have_posts()):
