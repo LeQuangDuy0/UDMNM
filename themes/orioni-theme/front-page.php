@@ -14,7 +14,7 @@ if ($lang === 'en') {
 }
 
 // Ngược lại mặc định VI
-include locate_template('page-home-vi.php', false, false);
+include locate_template('front-page.php', false, false);
 ?>
 <main class="site-page">
     <?php
