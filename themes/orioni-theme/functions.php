@@ -488,3 +488,17 @@ if (!function_exists('orioni_get_post_card_image_html')) {
   }
 }
 
+// Ẩn orioni_comm khỏi mọi query chung (home, blog, category, search...)
+// nhưng vẫn cho phép hiển thị tại trang taxonomy community_topic & single của nó
+add_action('pre_get_posts', function($q){
+  if (is_admin() || !$q->is_main_query()) return;
+
+  // Cho phép ở trang taxonomy của nó & single của chính nó
+  if ( is_tax('community_topic') || is_singular('orioni_comm') ) return;
+
+  // Loại khỏi các query còn lại
+  $pt = $q->get('post_type');
+  if (!$pt) $pt = ['post'];               // mặc định
+  $pt = (array)$pt;
+  $q->set('post_type', array_diff($pt, ['orioni_comm']));
+});
