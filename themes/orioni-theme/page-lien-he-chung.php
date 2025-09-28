@@ -199,13 +199,13 @@ $current_id = get_queried_object_id();
             <a class="about-switch__item <?php echo ($current_id === $lien_he_chung->ID) ? 'is-active' : ''; ?>"
                 href="<?php echo esc_url(get_permalink($lien_he_chung->ID)); ?>">
                 Liên hệ chung
-            </a>
+            
         <?php endif; ?>
         <?php if ($lien_he_nha_may): ?>
             <a class="about-switch__item <?php echo ($current_id === $lien_he_nha_may->ID) ? 'is-active' : ''; ?>"
                 href="<?php echo esc_url(get_permalink($lien_he_nha_may->ID)); ?>">
                 Liên hệ nhà máy
-            </a>
+            
         <?php endif; ?>
         <?php if ($yeu_cau_hop_tac): ?>
             <a class="about-switch__item <?php echo ($current_id === $yeu_cau_hop_tac->ID) ? 'is-active' : ''; ?>"
