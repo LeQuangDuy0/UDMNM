@@ -225,6 +225,8 @@ $current_id = get_queried_object_id();
   #contact-tabs .about-switch__wrap{
     display:flex;
     gap:12px;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
   }
 
   /* Nút */
