@@ -17,12 +17,41 @@
             </div>
 
             <!-- Ngôn ngữ + nút menu khi ở mobile-->
-            <div class="header-right"></div>
-            <div class="lang-switcher">
-                <a href="#"><img src="<?php echo get_template_directory_uri(); ?>/assets/img/vn.jpg" alt="VN"> VN</a>
-                <span class="separator">|</span>
-                <a href="#"><img src="<?php echo get_template_directory_uri(); ?>/assets/img/uk.jpg" alt="EN"> EN</a>
-            </div>
+<div class="header-right">
+  <?php if ( function_exists('pll_the_languages') ) : 
+    $langs = pll_the_languages([
+      'raw'           => 1,   // lấy mảng để tự render
+      'hide_current'  => 0,   // vẫn hiện ngôn ngữ hiện tại
+      'hide_if_empty' => 0,
+      'force_home'    => 1,   // nếu trang chưa có bản dịch -> trỏ về trang chủ của ngôn ngữ đó
+    ]);
+    $current = function_exists('pll_current_language') ? pll_current_language('slug') : '';
+    // map slug -> tên file cờ trong /assets/img/
+    $flag_map = [
+      'vi' => 'vn.jpg',
+      'en' => 'uk.jpg',
+    ];
+  ?>
+    <nav class="lang-switcher" aria-label="Language switcher">
+      <?php foreach ($langs as $slug => $lang) :
+        $flag_file = isset($flag_map[$slug]) ? $flag_map[$slug] : '';
+        $flag_src  = $flag_file ? get_template_directory_uri() . '/assets/img/' . $flag_file : '';
+        $active    = $slug === $current ? ' is-active' : '';
+      ?>
+        <a class="lang-item <?php echo esc_attr($slug . $active); ?>"
+           href="<?php echo esc_url($lang['url']); ?>"
+           lang="<?php echo esc_attr($slug); ?>" hreflang="<?php echo esc_attr($slug); ?>">
+          <?php if ($flag_src): ?>
+            <img src="<?php echo esc_url($flag_src); ?>" alt="<?php echo esc_attr($lang['name']); ?>">
+          <?php endif; ?>
+          <span><?php echo esc_html(strtoupper($slug)); ?></span>
+        </a>
+      <?php endforeach; ?>
+    </nav>
+  <?php else: ?>
+    <?php pll_the_languages(['show_flags'=>1,'show_names'=>1,'hide_current'=>0]); ?>
+  <?php endif; ?>
+</div>
             <button class="menu-toggle" aria-label="Mở menu">
                 <span class="bar"></span>
                 <span class="bar"></span>
