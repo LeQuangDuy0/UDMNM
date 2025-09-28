@@ -1,4 +1,5 @@
-<?php get_header(); 
+<?php 
+get_header(); 
 ?>
 <?php
 $lang = function_exists('pll_current_language') ? pll_current_language('slug') : 'vi';
