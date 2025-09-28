@@ -209,5 +209,52 @@ $current_id = get_queried_object_id();
 </div>
 
 <?php
+$term_slug = 'hoat-dong-xa-hoi';                 // 👈 trang này
+$paged = max(1, get_query_var('paged'), get_query_var('page'));
+
+$q = new WP_Query([
+  'post_type'      => 'orioni_comm',
+  'posts_per_page' => 6,
+  'paged'          => $paged,
+  'tax_query'      => [[
+    'taxonomy' => 'community_topic',
+    'field'    => 'slug',
+    'terms'    => [$term_slug],
+  ]],
+]);
+?>
+<main class="orioni-wrap">
+  <div class="orioni-grid">
+    <?php if ($q->have_posts()): while ($q->have_posts()): $q->the_post(); ?>
+      <article class="orioni-card">
+        <a class="orioni-card__link" href="<?php the_permalink(); ?>">
+          <div class="orioni-card__thumb">
+            <?php if (has_post_thumbnail()) {
+              the_post_thumbnail('large',['loading'=>'lazy']);
+            } else {
+              echo '<img src="'.esc_url(get_template_directory_uri().'/assets/img/placeholder-16x9.jpg').'" alt="">';
+            } ?>
+          </div>
+          <h3 class="orioni-card__title"><?php the_title(); ?></h3>
+        </a>
+      </article>
+    <?php endwhile; else: ?>
+      <p>Chưa có bài trong mục này.</p>
+    <?php endif; wp_reset_postdata(); ?>
+  </div>
+
+  <nav class="pagination">
+    <?php
+    echo paginate_links([
+      'current' => $paged,
+      'total'   => max(1, $q->max_num_pages),
+      'base'    => str_replace(999999999, '%#%', esc_url(get_pagenum_link(999999999))),
+      'format'  => 'page/%#%/',
+    ]);
+    ?>
+  </nav>
+</main>
+
+<?php
 get_footer();
 ?>

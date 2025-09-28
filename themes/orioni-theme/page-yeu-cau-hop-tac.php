@@ -235,7 +235,7 @@ $current_id = get_queried_object_id();
     display:block;
     text-align:center;
     padding:12px 16px;
-    border: solid #e5e7eb;
+
 
     background:#f8fafc;
     font-weight:600;

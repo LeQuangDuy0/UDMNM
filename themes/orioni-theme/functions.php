@@ -487,4 +487,139 @@ if (!function_exists('orioni_get_post_card_image_html')) {
     return '<img class="hn-ph" src="' . esc_url($fallback) . '" alt="" loading="lazy">';
   }
 }
+/*
+ *    - CPT: orioni_comm (Quan hệ cộng đồng) nằm dưới menu Posts
+ *    - Taxonomy: community_topic (Chủ đề) với URL /quan-he-cong-dong/{term}
+*/
+add_action('init', function () {
+  // CPT: Bài Quan hệ cộng đồng
+  register_post_type('orioni_comm', [
+    'labels' => [
+      'name'          => 'Quan hệ cộng đồng',
+      'singular_name' => 'Bài cộng đồng',
+      'menu_name'     => 'Quan hệ cộng đồng',
+      'add_new_item'  => 'Thêm bài cộng đồng',
+      'edit_item'     => 'Sửa bài cộng đồng',
+      'all_items'     => 'Tất cả bài cộng đồng',
+    ],
+    'public'        => true,
+    'show_ui'       => true,
+    'show_in_menu'  => 'edit.php', // 👈 đặt nhóm này dưới menu Posts
+    'supports'      => ['title','editor','thumbnail','excerpt','revisions'],
+    'has_archive'   => true,       // /quan-he-cong-dong/
+    'rewrite'       => ['slug'=>'quan-he-cong-dong','with_front'=>false],
+    'show_in_rest'  => true,       // hỗ trợ Gutenberg/REST
+  ]);
 
+  // Taxonomy: Chủ đề (Đạo đức kinh doanh / Hoạt động xã hội)
+  register_taxonomy('community_topic', ['orioni_comm'], [
+    'hierarchical'      => true,   // dạng category
+    'labels'            => [
+      'name' => 'Chủ đề',
+      'singular_name' => 'Chủ đề',
+      'menu_name' => 'Chủ đề',
+    ],
+    'show_ui'           => true,
+    'show_admin_column' => true,   // cột hiển thị trong list
+    'rewrite'           => ['slug'=>'quan-he-cong-dong','with_front'=>false],
+    'show_in_rest'      => true,
+  ]);
+});
+
+/*
+ *    - dao-duc-kinh-doanh
+ *    - hoat-dong-xa-hoi
+*/
+add_action('admin_init', function () {
+  if (!get_option('orioni_comm_terms_seeded')) {
+    $terms = [
+      ['Đạo đức kinh doanh', 'dao-duc-kinh-doanh'],
+      ['Hoạt động xã hội',   'hoat-dong-xa-hoi'],
+    ];
+    foreach ($terms as [$name, $slug]) {
+      if (!term_exists($slug, 'community_topic')) {
+        wp_insert_term($name, 'community_topic', ['slug'=>$slug]);
+      }
+    }
+    update_option('orioni_comm_terms_seeded', 1);
+  }
+});
+
+/*
+ *    -> giúp vào nhanh "Đạo đức kinh doanh" / "Hoạt động xã hội"
+*/
+add_action('admin_menu', function () {
+  $cap = 'edit_posts';
+
+  // Mục tổng cho CPT (giống "All posts" của riêng CPT)
+  add_submenu_page('edit.php', 'Quan hệ cộng đồng', 'Quan hệ cộng đồng',
+                   $cap, 'edit.php?post_type=orioni_comm');
+
+  // Hai menu con lọc theo taxonomy term
+  if ($t = get_term_by('slug','dao-duc-kinh-doanh','community_topic')) {
+    add_submenu_page('edit.php', 'Đạo đức kinh doanh', '— Đạo đức kinh doanh',
+                     $cap, 'edit.php?post_type=orioni_comm&community_topic='.$t->term_id);
+  }
+  if ($t = get_term_by('slug','hoat-dong-xa-hoi','community_topic')) {
+    add_submenu_page('edit.php', 'Hoạt động xã hội', '— Hoạt động xã hội',
+                     $cap, 'edit.php?post_type=orioni_comm&community_topic='.$t->term_id);
+  }
+});
+
+/*
+ *    -> để các submenu ở trên thực sự lọc đúng theo Chủ đề
+*/
+add_action('restrict_manage_posts', function($ptype){
+  if ($ptype !== 'orioni_comm') return;
+  $sel = isset($_GET['community_topic']) ? (int)$_GET['community_topic'] : 0;
+  wp_dropdown_categories([
+    'show_option_all' => 'Tất cả chủ đề',
+    'taxonomy'        => 'community_topic',
+    'name'            => 'community_topic',
+    'orderby'         => 'name',
+    'selected'        => $sel,
+    'hierarchical'    => true,
+    'hide_empty'      => false,
+  ]);
+});
+add_filter('parse_query', function($q){
+  if (!is_admin()) return;
+  if (($q->get('post_type') === 'orioni_comm') && !empty($_GET['community_topic'])) {
+    $q->set('tax_query', [[
+      'taxonomy' => 'community_topic',
+      'field'    => 'term_id',
+      'terms'    => [(int)$_GET['community_topic']]
+    ]]);
+  }
+});
+
+/*
+ *    -> chỉ hiển thị ở trang taxonomy & single của CPT
+*/
+add_action('pre_get_posts', function($q){
+  if (is_admin() || !$q->is_main_query()) return;
+  if ( is_tax('community_topic') || is_singular('orioni_comm') ) return; // cho phép
+  $pt = (array) ($q->get('post_type') ?: ['post']);
+  $q->set('post_type', array_diff($pt, ['orioni_comm']));
+});
+
+/* ------------------------------------
+ * (Polylang) Cho phép dịch CPT/Taxonomy (nếu dùng đa ngôn ngữ)
+ * ------------------------------------ */
+add_filter('pll_get_post_types', function($t){ $t['orioni_comm']='orioni_comm'; return $t; });
+add_filter('pll_get_taxonomies', function($t){ $t['community_topic']='community_topic'; return $t; });
+add_action('admin_menu', function () {
+  $cap = 'edit_posts';
+
+  add_submenu_page('edit.php', 'Quan hệ cộng đồng', 'Quan hệ cộng đồng',
+                   $cap, 'edit.php?post_type=orioni_comm');
+
+  if ($t = get_term_by('slug','dao-duc-kinh-doanh','community_topic')) {
+    add_submenu_page('edit.php', 'Đạo đức kinh doanh', '— Đạo đức kinh doanh',
+                     $cap, 'edit.php?post_type=orioni_comm&community_topic='.$t->term_id);
+  }
+  if ($t = get_term_by('slug','hoat-dong-xa-hoi','community_topic')) {
+    add_submenu_page('edit.php', 'Hoạt động xã hội', '— Hoạt động xã hội',
+                     $cap, 'edit.php?post_type=orioni_comm&community_topic='.$t->term_id);
+  }
+});
