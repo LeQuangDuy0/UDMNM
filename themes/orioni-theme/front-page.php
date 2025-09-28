@@ -1,4 +1,17 @@
-<?php get_header(); ?>
+<?php get_header(); 
+$lang = function_exists('pll_current_language') ? pll_current_language('slug') : 'vi';
+
+// Nếu English → nhúng file trang chủ EN
+if ($lang === 'en') {
+  // Đường dẫn file bạn muốn dùng cho EN
+  // Ví dụ: /wp-content/themes/orioni-theme/page-home-us.php
+  include locate_template('page-home-us.php', false, false);
+  get_footer();
+  return;
+}
+
+// Ngược lại mặc định VI
+include locate_template('page-home-vi.php', false, false);?>
 
 <main class="site-page">
     <?php
