@@ -233,13 +233,13 @@ $current_id = get_queried_object_id();
     display:block;
     text-align:center;
     padding:12px 16px;
-    border:1px solid #e5e7eb;
-    border-radius:10px;
+    border: solid #e5e7eb;
+
     background:#f8fafc;
     font-weight:600;
     line-height:1.25;
     text-decoration:none;
-    transition:background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
+    transition:background .2s ease, color .2s ease, box-shadow .2s ease;
     white-space:nowrap;        /* tránh xuống dòng khi màn hình hẹp */
   }
   #contact-tabs .about-switch__item:hover{
@@ -249,7 +249,7 @@ $current_id = get_queried_object_id();
   #contact-tabs .about-switch__item.is-active{
     background:#e31e25;
     color:#fff;
-    border-color:#e31e25;
+    
   }
 
   /* Viền ngăn cách nhẹ khi nằm sát nhau (tùy thích) */
