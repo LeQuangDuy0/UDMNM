@@ -1,5 +1,5 @@
 <?php
-/* Template Name: dao-duc-kinh-doanh */
+/* Template Name: lien-he-chung */
 get_header(); ?>
 <?PHP
 /* ===== Lấy dữ liệu ACF (ưu tiên trên trang; nếu có Options Page thì fallback sang 'option') ===== */
@@ -187,28 +187,34 @@ function orioni_breadcrumbs()
 </nav>
 <!-- Breadcrumb dưới hero - end -->
 <?php
-// Lấy 2 trang con theo đường dẫn (đổi nếu slug khác)
-$dao_duc_kinh_doanh = get_page_by_path('quan-he-cong-dong/dao-duc-kinh-doanh');
-$hoat_dong_xa_hoi = get_page_by_path('quan-he-cong-dong/hoat-dong-xa-hoi');
+// Lấy 3 trang con theo đường dẫn (đổi nếu slug khác)
+$lien_he_chung = get_page_by_path('lien-he/lien-he-chung');
+$lien_he_nha_may = get_page_by_path('lien-he/lien-he-nha-may');
+$yeu_cau_hop_tac = get_page_by_path('lien-he/yeu-cau-hop-tac');
 $current_id = get_queried_object_id();
 ?>
 <div class="about-switch" aria-label="About tabs">
     <div class="about-switch__wrap">
-        <?php if ($dao_duc_kinh_doanh): ?>
-            <a class="about-switch__item <?php echo ($current_id === $dao_duc_kinh_doanh->ID) ? 'is-active' : ''; ?>"
-                href="<?php echo esc_url(get_permalink($dao_duc_kinh_doanh->ID)); ?>">
-                Đạo đức kinh doanh
+        <?php if ($lien_he_chung): ?>
+            <a class="about-switch__item <?php echo ($current_id === $lien_he_chung->ID) ? 'is-active' : ''; ?>"
+                href="<?php echo esc_url(get_permalink($lien_he_chung->ID)); ?>">
+                Liên hệ chung
             </a>
         <?php endif; ?>
-        <?php if ($hoat_dong_xa_hoi): ?>
-            <a class="about-switch__item <?php echo ($current_id === $hoat_dong_xa_hoi->ID) ? 'is-active' : ''; ?>"
-                href="<?php echo esc_url(get_permalink($hoat_dong_xa_hoi->ID)); ?>">
-                Hoạt động xã hội
+        <?php if ($lien_he_nha_may): ?>
+            <a class="about-switch__item <?php echo ($current_id === $lien_he_nha_may->ID) ? 'is-active' : ''; ?>"
+                href="<?php echo esc_url(get_permalink($lien_he_nha_may->ID)); ?>">
+                Liên hệ nhà máy
+            </a>
+        <?php endif; ?>
+        <?php if ($yeu_cau_hop_tac): ?>
+            <a class="about-switch__item <?php echo ($current_id === $yeu_cau_hop_tac->ID) ? 'is-active' : ''; ?>"
+                href="<?php echo esc_url(get_permalink($yeu_cau_hop_tac->ID)); ?>">
+                Yêu cầu hợp tác
             </a>
         <?php endif; ?>
     </div>
 </div>
-
 
 <?php
 get_footer();
