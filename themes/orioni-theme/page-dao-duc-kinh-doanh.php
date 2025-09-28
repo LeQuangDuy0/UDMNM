@@ -209,57 +209,6 @@ $current_id = get_queried_object_id();
 </div>
 
 
-$term = get_queried_object();               // term hiện tại (vd: dao-duc-kinh-doanh)
-$paged = max(1, get_query_var('paged'));
-
-$q = new WP_Query([
-  'post_type'      => 'orioni_comm',
-  'posts_per_page' => 6,
-  'paged'          => $paged,
-  'tax_query'      => [[
-    'taxonomy' => 'community_topic',
-    'field'    => 'term_id',
-    'terms'    => [$term->term_id],        // chỉ bài thuộc ĐÚNG term hiện tại
-  ]],
-]);
-?>
-<main class="orioni-wrap">
-  <div class="orioni-tabs">
-    <?php
-    // Tabs 2 mục
-    $tabs = get_terms(['taxonomy'=>'community_topic','hide_empty'=>false,'parent'=>0,'orderby'=>'term_order']);
-    foreach ($tabs as $t): ?>
-      <a class="tab<?php echo $t->term_id===$term->term_id?' is-active':''; ?>"
-         href="<?php echo esc_url(get_term_link($t)); ?>">
-        <?php echo esc_html($t->name); ?>
-      </a>
-    <?php endforeach; ?>
-  </div>
-
-  <h1 class="orioni-page-title"><?php echo esc_html($term->name); ?></h1>
-
-  <div class="orioni-grid">
-    <?php if ($q->have_posts()): while ($q->have_posts()): $q->the_post(); ?>
-      <article class="orioni-card">
-        <a href="<?php the_permalink(); ?>" class="orioni-card__link">
-          <div class="orioni-card__thumb">
-            <?php has_post_thumbnail()
-              ? the_post_thumbnail('large',['loading'=>'lazy'])
-              : print('<img src="'.esc_url(get_template_directory_uri().'/assets/img/placeholder-16x9.jpg').'" alt="">'); ?>
-          </div>
-          <h3 class="orioni-card__title"><?php the_title(); ?></h3>
-        </a>
-      </article>
-    <?php endwhile; else: ?>
-      <p>Chưa có bài trong chủ đề này.</p>
-    <?php endif; wp_reset_postdata(); ?>
-  </div>
-
-  <nav class="pagination">
-    <?php echo paginate_links(['current'=>$paged,'total'=>max(1,$q->max_num_pages)]); ?>
-  </nav>
-</main>
-
 <?php
 get_footer();
 ?>
