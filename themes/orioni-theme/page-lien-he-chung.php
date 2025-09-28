@@ -193,19 +193,19 @@ $lien_he_nha_may = get_page_by_path('lien-he/lien-he-nha-may');
 $yeu_cau_hop_tac = get_page_by_path('lien-he/yeu-cau-hop-tac');
 $current_id = get_queried_object_id();
 ?>
-<div class="about-switch" aria-label="About tabs">
+<div id="contact-tabs" class="about-switch" aria-label="About tabs">
     <div class="about-switch__wrap">
         <?php if ($lien_he_chung): ?>
             <a class="about-switch__item <?php echo ($current_id === $lien_he_chung->ID) ? 'is-active' : ''; ?>"
                 href="<?php echo esc_url(get_permalink($lien_he_chung->ID)); ?>">
                 Liên hệ chung
-            
+            </a>
         <?php endif; ?>
         <?php if ($lien_he_nha_may): ?>
             <a class="about-switch__item <?php echo ($current_id === $lien_he_nha_may->ID) ? 'is-active' : ''; ?>"
                 href="<?php echo esc_url(get_permalink($lien_he_nha_may->ID)); ?>">
                 Liên hệ nhà máy
-            
+            </a>
         <?php endif; ?>
         <?php if ($yeu_cau_hop_tac): ?>
             <a class="about-switch__item <?php echo ($current_id === $yeu_cau_hop_tac->ID) ? 'is-active' : ''; ?>"
@@ -215,6 +215,58 @@ $current_id = get_queried_object_id();
         <?php endif; ?>
     </div>
 </div>
+
+
+<style>
+  /* Wrapper */
+  #contact-tabs{ margin:20px auto 28px; }
+
+  /* 3 item chia đều 1 hàng */
+  #contact-tabs .about-switch__wrap{
+    display:flex;
+    gap:12px;
+  }
+
+  /* Nút */
+  #contact-tabs .about-switch__item{
+    flex:1 1 0%;               /* chia đều */
+    display:block;
+    text-align:center;
+    padding:12px 16px;
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    background:#f8fafc;
+    font-weight:600;
+    line-height:1.25;
+    text-decoration:none;
+    transition:background .2s ease, color .2s ease, box-shadow .2s ease, border-color .2s ease;
+    white-space:nowrap;        /* tránh xuống dòng khi màn hình hẹp */
+  }
+  #contact-tabs .about-switch__item:hover{
+    background:#ffffff;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+  }
+  #contact-tabs .about-switch__item.is-active{
+    background:#e31e25;
+    color:#fff;
+    border-color:#e31e25;
+  }
+
+  /* Viền ngăn cách nhẹ khi nằm sát nhau (tùy thích) */
+  #contact-tabs .about-switch__item + .about-switch__item{ }
+
+  /* Tối ưu mobile cực nhỏ: thu nhỏ font để vẫn 1 hàng 3 nút */
+  @media (max-width:480px){
+    #contact-tabs .about-switch__item{ padding:10px 8px; font-size:14px; }
+  }
+
+  /* Nếu bạn muốn mobile xuống 1 cột, bỏ comment khối dưới:
+  @media (max-width:640px){
+    #contact-tabs .about-switch__wrap{ display:grid; grid-template-columns:1fr; }
+    #contact-tabs .about-switch__item{ white-space:normal; }
+  }
+  */
+</style>
 
 <?php
 get_footer();
