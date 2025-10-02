@@ -487,3 +487,149 @@ if (!function_exists('orioni_get_post_card_image_html')) {
     return '<img class="hn-ph" src="' . esc_url($fallback) . '" alt="" loading="lazy">';
   }
 }
+
+
+/** QUAN HỆ CỘNG ĐỒNG: CPT + TAXONOMY (ẩn menu tổng) */
+add_action('init', function () {
+  // CPT
+  register_post_type('orioni_comm', [
+    'labels' => [
+      'name'          => 'Quan hệ cộng đồng',
+      'singular_name' => 'Bài cộng đồng',
+      'add_new_item'  => 'Thêm bài cộng đồng',
+      'edit_item'     => 'Sửa bài cộng đồng',
+      'all_items'     => 'Tất cả bài cộng đồng',
+    ],
+    'public'        => true,
+    'show_ui'       => true,
+    'show_in_menu'  => false,     // ẩn mục tổng, chỉ hiển thị 2 submenu lọc
+    'supports'      => ['title','editor','thumbnail','excerpt','revisions'],
+    'has_archive'   => false,
+    'rewrite'       => ['slug'=>'orioni-comm','with_front'=>false],
+    'show_in_rest'  => true,
+  ]);
+
+  // Taxonomy
+  register_taxonomy('community_topic', ['orioni_comm'], [
+    'hierarchical'      => true,
+    'labels'            => ['name'=>'Chủ đề','singular_name'=>'Chủ đề'],
+    'show_ui'           => true,
+    'show_admin_column' => true,
+    'rewrite'           => false, // không tạo URL /quan-he-cong-dong/{term}
+    'show_in_rest'      => true,
+  ]);
+});
+
+// Tạo sẵn 2 term nếu chưa có
+add_action('admin_init', function () {
+  if (!get_option('orioni_comm_terms_seeded')) {
+    foreach ([['Đạo đức kinh doanh','dao-duc-kinh-doanh'],['Hoạt động xã hội','hoat-dong-xa-hoi']] as $p) {
+      if (!term_exists($p[1],'community_topic')) wp_insert_term($p[0],'community_topic',['slug'=>$p[1]]);
+    }
+    update_option('orioni_comm_terms_seeded', 1);
+  }
+});
+
+// Chỉ thêm 2 submenu con dưới Posts
+add_action('admin_menu', function () {
+  $cap='edit_posts';
+  if ($t=get_term_by('slug','dao-duc-kinh-doanh','community_topic')) {
+    add_submenu_page('edit.php','Đạo đức kinh doanh','— Đạo đức kinh doanh',
+      $cap,'edit.php?post_type=orioni_comm&community_topic='.$t->term_id);
+  }
+  if ($t=get_term_by('slug','hoat-dong-xa-hoi','community_topic')) {
+    add_submenu_page('edit.php','Hoạt động xã hội','— Hoạt động xã hội',
+      $cap,'edit.php?post_type=orioni_comm&community_topic='.$t->term_id);
+  }
+});
+
+// Dropdown filter theo Chủ đề ở màn list
+add_action('restrict_manage_posts', function($ptype){
+  if ($ptype!=='orioni_comm') return;
+  $sel = isset($_GET['community_topic']) ? (int)$_GET['community_topic'] : 0;
+  wp_dropdown_categories([
+    'show_option_all'=>'Tất cả chủ đề','taxonomy'=>'community_topic','name'=>'community_topic',
+    'orderby'=>'name','selected'=>$sel,'hierarchical'=>true,'hide_empty'=>false,
+  ]);
+});
+add_filter('parse_query', function($q){
+  if (!is_admin()) return;
+  if ($q->get('post_type')==='orioni_comm' && !empty($_GET['community_topic'])) {
+    $q->set('tax_query', [[
+      'taxonomy'=>'community_topic','field'=>'term_id','terms'=>[(int)$_GET['community_topic']]
+    ]]);
+  }
+});
+
+// Polylang (nếu dùng)
+add_filter('pll_get_post_types', function($t){ $t['orioni_comm']='orioni_comm'; return $t; });
+add_filter('pll_get_taxonomies', function($t){ $t['community_topic']='community_topic'; return $t; });
+/** Helper ảnh (fallback gọn) */
+function orioni_comm_card_image($post_id=0,$size='large'){
+  $post_id = $post_id ?: get_the_ID();
+  if (has_post_thumbnail($post_id)) return get_the_post_thumbnail($post_id,$size,['loading'=>'lazy']);
+  $content = get_post_field('post_content',$post_id);
+  if ($content && preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i',$content,$m)) {
+    return '<img src="'.esc_url($m[1]).'" alt="'.esc_attr(get_the_title($post_id)).'" loading="lazy">';
+  }
+  return '<span class="comm-ph" aria-hidden="true"></span>';
+}
+
+/** [community_grid topic="dao-duc-kinh-doanh" per_page="12" columns="2" gap="28" pagination="false"] */
+add_shortcode('community_grid', function($atts){
+  $a = shortcode_atts([
+    'topic'      => '',         // slug hoặc ID của term
+    'per_page'   => -1,         // -1 = tất cả
+    'columns'    => 2,          // 1/2/3/4
+    'gap'        => 28,         // khoảng cách (px)
+    'orderby'    => 'date',
+    'order'      => 'DESC',
+    'pagination' => 'false'
+  ], $atts);
+
+  $tax = [];
+  if ($a['topic']!=='') {
+    $field = ctype_digit((string)$a['topic']) ? 'term_id' : 'slug';
+    $tax = [[ 'taxonomy'=>'community_topic','field'=>$field,'terms'=> $field==='slug'?sanitize_title($a['topic']):(int)$a['topic'] ]];
+  }
+
+  $paged = max(1, (int)get_query_var('paged'));
+  $q = new WP_Query([
+    'post_type'      => 'orioni_comm',
+    'posts_per_page' => (int)$a['per_page'],
+    'orderby'        => sanitize_text_field($a['orderby']),
+    'order'          => sanitize_text_field($a['order']),
+    'tax_query'      => $tax ?: null,
+    'paged'          => ($a['pagination']==='true') ? $paged : 1,
+  ]);
+
+  $cols = max(1, min(4, (int)$a['columns']));
+  $gap  = max(0, (int)$a['gap']);
+
+  ob_start(); ?>
+  <div class="comm-wrap" style="--comm-cols:<?php echo $cols; ?>; --comm-gap:<?php echo $gap; ?>px;">
+    <div class="comm-grid">
+      <?php if ($q->have_posts()): while($q->have_posts()): $q->the_post(); ?>
+        <article class="comm-card">
+          <a class="thumb" href="<?php the_permalink(); ?>">
+            <?php echo orioni_comm_card_image(get_the_ID(),'large'); ?>
+          </a>
+          <h3 class="title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+        </article>
+      <?php endwhile; wp_reset_postdata(); else: ?>
+        <p>Chưa có bài viết.</p>
+      <?php endif; ?>
+    </div>
+
+    <?php if ($a['pagination']==='true') : ?>
+      <nav class="comm-pager">
+        <?php echo paginate_links([
+          'total'   => $q->max_num_pages,
+          'current' => $paged,
+        ]); ?>
+      </nav>
+    <?php endif; ?>
+  </div>
+  <?php
+  return ob_get_clean();
+});
