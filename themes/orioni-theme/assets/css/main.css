@@ -2953,3 +2953,63 @@ p.reveal {
 }
 @media (max-width:1024px){ .comm-wrap{ --comm-cols:2; } }
 @media (max-width:640px){ .comm-wrap{ --comm-cols:1; --comm-gap:16px; } }
+
+
+/* Container dùng chung (khớp bề rộng với header) */
+:root{
+  --page-max: 1200px;   /* chỉnh con số này để trùng đúng header của bạn (ví dụ 1200/1240px) */
+  --gutter-x: 16px;
+}
+.orioni-container{
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter-x);
+}
+
+/* Footer layout */
+.site-footer{
+  background: #f8f8f8;
+  color: #333;
+}
+.site-footer .footer-top{
+  padding: 32px 0;
+}
+.site-footer .footer-bottom{
+  border-top: 1px solid #eaeaea;
+  padding: 16px 0;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Lưới cột menu */
+.footer-menus{
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); /* tự chia 4 cột */
+  gap: 24px;
+}
+.footer-col h4{
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.footer-col ul{
+  margin: 0; padding: 0; list-style: none;
+}
+.footer-col li{ margin: 6px 0; }
+.footer-col a{
+  color: inherit; text-decoration: none;
+}
+.footer-col a:hover{
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 992px){
+  .footer-menus{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 576px){
+  .footer-menus{ grid-template-columns: 1fr; }
+}
