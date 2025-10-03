@@ -4,6 +4,7 @@
  */
 ?>
 <footer class="site-footer">
+  <nav>
   <div class="footer-top">
 
     <!-- Footer menus (1 menu -> nhiều cột) -->
@@ -70,6 +71,7 @@
     <p> Tầng 2, Tòa nhà cao nhì thế giới xếp từ dưới lên tại Trái Đất| SĐT : 0366778386</p>
     <p>© <?php echo date('Y'); ?> . All Rights Reserved</p>
   </div>
+  </nav>
 </footer>
 
 <?php wp_footer(); ?>
