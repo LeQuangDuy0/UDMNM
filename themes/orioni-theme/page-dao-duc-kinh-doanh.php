@@ -258,6 +258,7 @@ $q = new WP_Query([
   </nav>
 </main>
 
+
 <?php
 get_footer();
 ?>
