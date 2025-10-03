@@ -12,3 +12,6 @@ upgrade-temp-backup/
 uploads/
 uploads.zip
 *.zip
+
+**/.htaccess
+    
